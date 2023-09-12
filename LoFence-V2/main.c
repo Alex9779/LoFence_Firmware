@@ -2,14 +2,13 @@
 #include <util/delay.h>
 #include <string.h>
 #include <stdio.h>
+#include "la66.h"
 #include "main.h"
-
-#define INTERVAL_SECONDS 5 * 60 // time to sleep between measurements
-#define RANDOMNESS 10 // +- time to sleep between measurements
-#define MEASURE_MS 6000 // time in ms a measurement should take (per polarity)
 
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
+
+uint32_t EEMEM tdc = INTERVAL_SECONDS; // transmit duty cycle
 
 const uint16_t max3v3_volt = 12000; // theoretical value
 
@@ -20,8 +19,8 @@ volatile uint8_t adc_max = 0;
 volatile uint8_t adc_min = 0;
 uint8_t adc_val = 0;
 
-char buffer_info[256];
-char buffer_la[256];
+char buffer_info[LA66_MAX_BUFF];
+char buffer_la[LA66_MAX_BUFF];
 
 uint16_t volt_bat = 0;
 uint16_t volt_fence_plus = 0;
@@ -50,121 +49,23 @@ ISR(ADC_vect) {
 
 // ----------------------------------------------------------------------------------------------
 
-void la66_rx_clear() {
-	info("LA66 RX clearing\r\n");
-	
-	while(USART_0_is_rx_ready()) {
-		while(USART_0_is_rx_ready()) {
-			USART_0_read();
-		}
-		_delay_ms(100);
-	}
-}
-
-void la66_init() {
-	info("LA66 initialization\r\n");
-
-	LA_RESET_set_level(false);
-	_delay_ms(100);
-	LA_RESET_set_level(true);
-	_delay_ms(5000);	
-
-	for (uint8_t i = 0; i < 100; i++) {
-		if (i == 99) {
-			la66_init_error();
-		}
-		
-		la66_rx_clear();
-			
-		sprintf(buffer_la, "AT+NJS=?\r\n");
-		la66_tx(buffer_la);
-		
-		la66_rx(false);
-		if (strcmp(buffer_la, "1") == 0) {
-			la66_rx(false);
-			break;
-		}
-		la66_rx(false);
-
-		_delay_ms(500);
-	}
-}
-
-void la66_init_error() {
-	info("Aborting initialization\r\n");
-
-	LA_RESET_set_level(false);
-	
-	while(1) {
-		LED_TX_set_level(true);
-		_delay_ms(100);
-		LED_TX_set_level(false);
-		_delay_ms(100);
-	}
-}
-
-void la66_tx_error() {
-	info("Aborting transmission\r\n");
-
-	LA_RESET_set_level(false);
-	
-	for (uint8_t i = 0; i < 20; i++) {
-		LED_TX_set_level(true);
-		_delay_ms(300);
-		LED_TX_set_level(false);
-		_delay_ms(300);
-	}
-}
-
-void la66_tx(char buf[]) {
-	info("LA66 TX: ");
-	info(buf);
-	
-	for (uint8_t i = 0; i < strlen(buf); i++) {
-		while (!USART_0_is_tx_ready()) {}
-		USART_0_write(buf[i]);
-	}
-	while (USART_0_is_tx_busy()) {}
-}
-
-void la66_rx(bool rec) {
-	char nc = 0x00;
-	uint8_t len = 0;
-
-	for (; len < 255; len++) {
-		nc = USART_0_read();
-		if (nc == '\n' || nc == '\r') {
-			break;
-		}
-		buffer_la[len] = nc;
-	}
-	buffer_la[len] = '\0';
-	
-	if (len == 0) {
-		la66_rx(true);
-	}
-	
-	if (!rec) {
-		info(buffer_la);
-		info("\r\n");
-	}
-}
-
-// ----------------------------------------------------------------------------------------------
-
-void power_save(uint32_t sec) {
+void power_save(uint32_t sec)
+{
 	seconds = 0;
 	sleep_enable();
-	while (seconds <= sec) {
+	while (seconds <= sec)
+	{
 		sleep_mode();
 	}
 	sleep_disable();
 }
 
-void info(char buf[]) {
-	for (uint8_t i = 0; i < strlen(buf); i++) {
+void log_serial(char *msg)
+{
+	for (uint8_t i = 0; i < strlen(msg); i++)
+	{
 		while (!USART_1_is_tx_ready()) {}
-		USART_1_write(buf[i]);
+		USART_1_write(msg[i]);
 	}
 	while (USART_1_is_tx_busy()) {}
 }
@@ -172,8 +73,6 @@ void info(char buf[]) {
 // ----------------------------------------------------------------------------------------------
 
 void adc_init() {
-	info("ADC initialization\r\n");
-
 	PRR0 &= ~(1 << PRADC); // Enable
 	
 	DIDR0 = (1 << ADC0D) | (1 << ADC2D) | (1 << ADC4D); // Disable input buffer
@@ -199,13 +98,13 @@ void adc_init() {
 	ACSR |= (1 << ACD); // Disable Comparator
 
 	ADCSRA &= ~(1 << ADEN); // Disable ADC
-	PRR0 |= (1 << PRADC); // Disable ADC	
+	PRR0 |= (1 << PRADC); // Disable ADC
 }
 
 void measure() {
 	LED_MSR_set_level(true);
 	
-	info("Measuring\r\n");
+	log_serial("Measuring...\r\n");
 	
 	// ----------------------------------------------------------------------------------------------
 
@@ -214,8 +113,8 @@ void measure() {
 	_delay_ms(1000);
 	
 	// ----------------------------------------------------------------------------------------------
-		
-	info("Measuring battery: ");
+	
+	log_serial("Measuring battery: ");
 
 	BAT_GND_set_level(false);
 	_delay_ms(1000);
@@ -230,14 +129,14 @@ void measure() {
 
 	volt_bat = (((330000/255*adc_min*2) - 0))/100;
 
-	sprintf (buffer_info, "%d mV\r\n", volt_bat);
-	info(buffer_info);
+	sprintf(buffer_info, "%d mV\r\n", volt_bat);
+	log_serial(buffer_info);
 
 	// ----------------------------------------------------------------------------------------------
 
-	info("Measuring fence positive: ");
+	log_serial("Measuring fence positive: ");
 	
-	ADMUX = (ADMUX & 0xE0) | (1 << MUX1); // Pin 2	
+	ADMUX = (ADMUX & 0xE0) | (1 << MUX1); // Pin 2
 	ADCSRA |= (1 << ADEN);
 	ADCSRA |= (1 << ADSC);
 	adc_clear = 1;
@@ -246,12 +145,12 @@ void measure() {
 
 	volt_fence_plus = (max3v3_volt/255*adc_max);
 
-	sprintf (buffer_info, "%d V\r\n", volt_fence_plus);
-	info(buffer_info);
+	sprintf(buffer_info, "%d V\r\n", volt_fence_plus);
+	log_serial(buffer_info);
 
 	// ----------------------------------------------------------------------------------------------
 
-	info("Measuring fence negative: ");
+	log_serial("Measuring fence negative: ");
 
 	ADMUX = (ADMUX & 0xE0); // Pin 0
 	ADCSRA |= (1 << ADEN);
@@ -262,8 +161,8 @@ void measure() {
 
 	volt_fence_minus = (max3v3_volt/255*adc_max);
 
-	sprintf (buffer_info, "%d V\r\n", volt_fence_minus);
-	info(buffer_info);
+	sprintf(buffer_info, "%d V\r\n", volt_fence_minus);
+	log_serial(buffer_info);
 
 	// ----------------------------------------------------------------------------------------------
 
@@ -275,24 +174,27 @@ void measure() {
 
 void transmit() {
 	LED_TX_set_level(true);
-		
-	info("Transmitting\r\n");	
-
-	la66_rx_clear();
-
-	sprintf(buffer_la, "AT+SENDB=0,1,6,%04X%04X%04X\r\n", volt_bat, volt_fence_plus, volt_fence_minus);
-	la66_tx(buffer_la);
-	la66_rx(false);
-	la66_rx(false);
-	la66_rx(false);
-	if (strcmp(buffer_la, "OK") != 0) {
-		la66_tx_error();
-		return;
-	}
-	la66_rx(false);
-	if (strcmp(buffer_la, "txDone") != 0) {
-		la66_tx_error();
-		return;
+	
+	uint8_t fPort = 1;
+	uint8_t rxSize = 0;
+	
+	log_serial("Transmitting...\r\n");
+	
+	sprintf(buffer_la, "%04X%04X%04X", volt_bat, volt_fence_plus, volt_fence_minus);
+	
+	if (LA66_transmitB(&fPort, false, buffer_la, &rxSize) == LA66_SUCCESS)
+	{
+		switch (buffer_la[0] & 0xFF)
+		{
+			case 0x01:
+			{
+				if (rxSize == 4)
+				{
+					eeprom_write_dword(&tdc, ((uint32_t)buffer_la[1]<<16 | buffer_la[2]<<8 | buffer_la[3] ));
+				}
+				break;
+			}
+		}
 	}
 	
 	LED_TX_set_level(false);
@@ -300,12 +202,12 @@ void transmit() {
 
 void pause() {
 	LED_IDLE_set_level(true);
-		
-	sprintf (buffer_info, "Sleeping for %d seconds\r\n", INTERVAL_SECONDS);
-	info(buffer_info);
+	
+	sprintf (buffer_info, "Sleeping for %lu seconds\r\n", eeprom_read_dword(&tdc));
+	log_serial(buffer_info);
 	_delay_ms(500);
 	
-	power_save(INTERVAL_SECONDS +(rand() % (RANDOMNESS * 2) - RANDOMNESS));
+	power_save(eeprom_read_dword(&tdc) + (rand() % (RANDOMNESS * 2) - RANDOMNESS));
 	
 	LED_IDLE_set_level(false);
 }
@@ -315,27 +217,40 @@ void pause() {
 int main(void) {
 
 	atmel_start_init();
-
+	
 	LED_IDLE_set_level(true);
 	LED_MSR_set_level(true);
 	LED_TX_set_level(true);
 
-	info("\r\n");
-	info("LoFence-V2 v0.1 by alex9779\r\n");
-	info("https://github.com/alex9779/lofence-v2\r\n");
-	info("Lets get started!\r\n");
-	info("\r\n");
+	log_serial("\r\n");
+	log_serial("LoFence-V2 v0.1 by Alex9779\r\n");
+	log_serial("https://github.com/alex9779/lofence-v2\r\n");
+	log_serial("\r\n");
 	
 	LED_IDLE_set_level(false);
 
+	log_serial("Initializing ADC...\r\n");
 	adc_init();
 	LED_MSR_set_level(false);
-
-	la66_init();
+	
+	log_serial("Activating LA66 module...\r\n");
+	LA66_reset();
+	
+	log_serial("Waiting to join network...\r\n");
+	if (LA66_waitForJoin() == LA66_ERR_PANIC)
+	{
+		LA66_deactivate();
+		
+		while (1)
+		{
+			LED_TX_toggle_level();
+			_delay_ms(100);
+		}
+	}
 	LED_TX_set_level(false);
 	
-	while (1) {
-		
+	while (1)
+	{
 		measure();
 
 		transmit();
