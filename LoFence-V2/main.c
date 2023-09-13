@@ -218,6 +218,26 @@ void transmit() {
 	LED_TX_set_level(false);
 }
 
+void check_battery()
+{
+	if (volt_bat < 3400)
+	{
+		LED_IDLE_set_level(false);
+		LED_MSR_set_level(false);
+		LED_TX_set_level(false);
+		
+		sleep_set_mode(2); // set to power down mode
+		
+		ACTIVATE_set_level(false);
+		
+		sleep_enable();
+		while (1)
+		{
+			sleep_mode();
+		}
+	}
+}
+
 void pause() {
 	LED_IDLE_set_level(true);
 	
@@ -276,6 +296,8 @@ int main(void) {
 		measure();
 
 		transmit();
+		
+		check_battery();
 		
 		pause();
 	}
