@@ -10,7 +10,7 @@
 
 uint32_t EEMEM tdc = INTERVAL_SECONDS; // transmit duty cycle
 
-const uint16_t max3v3_volt = 12000; // theoretical value
+uint16_t EEMEM max3v3_volt = 12000; // theoretical maximum value
 
 volatile uint32_t seconds = 0;
 
@@ -143,7 +143,7 @@ void measure() {
 	_delay_ms(MEASURE_MS);
 	ADCSRA &= ~(1 << ADEN);
 
-	volt_fence_plus = (max3v3_volt/255*adc_max);
+	volt_fence_plus = (eeprom_read_word(&max3v3_volt)/255*adc_max);
 
 	sprintf(buffer_info, "%d V\r\n", volt_fence_plus);
 	log_serial(buffer_info);
@@ -159,7 +159,7 @@ void measure() {
 	_delay_ms(MEASURE_MS);
 	ADCSRA &= ~(1 << ADEN);
 
-	volt_fence_minus = (max3v3_volt/255*adc_max);
+	volt_fence_minus = (eeprom_read_word(&max3v3_volt)/255*adc_max);
 
 	sprintf(buffer_info, "%d V\r\n", volt_fence_minus);
 	log_serial(buffer_info);
@@ -191,6 +191,14 @@ void transmit() {
 				if (rxSize == 4)
 				{
 					eeprom_write_dword(&tdc, ((uint32_t)buffer_la[1]<<16 | buffer_la[2]<<8 | buffer_la[3]));
+				}
+				break;
+			}
+			case 0x11:
+			{
+				if (rxSize == 3)
+				{
+					eeprom_write_word(&max3v3_volt, (buffer_la[1]<<8 | buffer_la[2]));
 				}
 				break;
 			}
