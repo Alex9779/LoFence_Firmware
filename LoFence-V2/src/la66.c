@@ -11,6 +11,7 @@
 //========
 // includes
 #include "la66.h"
+#include "variable_delay.h"
 
 #ifdef DEBUG
 char debug[32 + LA66_MAX_BUFF];
@@ -20,15 +21,6 @@ char debug[32 + LA66_MAX_BUFF];
 // FUNCTIONS
 //===========
 // PRIVATE
-
-static void _delay_100ms(int ms)
-{
-	while (0 < ms)
-	{
-		_delay_ms(100);
-		ms -= 100;
-	}
-}
 
 static void readHex(char* buf, char* txt)
 {

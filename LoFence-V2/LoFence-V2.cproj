@@ -262,6 +262,9 @@ avrdude -c usbasp -p atmega1284p -U hfuse:w:0xD9:m -U lfuse:w:0xE2:m -U flash:w:
     <Compile Include="include\atmel_start_pins.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="include\variable_delay.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="include\driver_init.h">
       <SubType>compile</SubType>
     </Compile>
@@ -293,6 +296,9 @@ avrdude -c usbasp -p atmega1284p -U hfuse:w:0xD9:m -U lfuse:w:0xE2:m -U flash:w:
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="main.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\variable_delay.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\driver_init.c">
