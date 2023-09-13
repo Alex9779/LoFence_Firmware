@@ -3,13 +3,14 @@
 #include <string.h>
 #include <stdio.h>
 #include "la66.h"
+#include "variable_delay.h"
 #include "main.h"
 
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
 uint32_t EEMEM tdc = INTERVAL_SECONDS; // transmit duty cycle
-
+uint16_t EEMEM msr_ms = MEASURE_MS;
 uint16_t EEMEM max3v3_volt = 12000; // theoretical maximum value
 
 volatile uint32_t seconds = 0;
@@ -140,7 +141,7 @@ void measure() {
 	ADCSRA |= (1 << ADEN);
 	ADCSRA |= (1 << ADSC);
 	adc_clear = 1;
-	_delay_ms(MEASURE_MS);
+	_delay_100ms(eeprom_read_word(&msr_ms));
 	ADCSRA &= ~(1 << ADEN);
 
 	volt_fence_plus = (eeprom_read_word(&max3v3_volt)/255*adc_max);
@@ -156,7 +157,7 @@ void measure() {
 	ADCSRA |= (1 << ADEN);
 	ADCSRA |= (1 << ADSC);
 	adc_clear = 1;
-	_delay_ms(MEASURE_MS);
+	_delay_100ms(eeprom_read_word(&msr_ms));
 	ADCSRA &= ~(1 << ADEN);
 
 	volt_fence_minus = (eeprom_read_word(&max3v3_volt)/255*adc_max);
@@ -191,6 +192,14 @@ void transmit() {
 				if (rxSize == 4)
 				{
 					eeprom_write_dword(&tdc, ((uint32_t)buffer_la[1]<<16 | buffer_la[2]<<8 | buffer_la[3]));
+				}
+				break;
+			}
+			case 0x10:
+			{
+				if (rxSize == 3)
+				{
+					eeprom_write_word(&msr_ms, (buffer_la[1]<<8 | buffer_la[2]));
 				}
 				break;
 			}
