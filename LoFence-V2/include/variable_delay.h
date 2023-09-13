@@ -1,9 +1,9 @@
 /*
- * variable_delay.h
- *
- * Created: 13.09.2023 15:28:29
- *  Author: alexander
- */ 
+* variable_delay.h
+*
+* Created: 13.09.2023 15:28:29
+*  Author: alexander
+*/
 
 
 #ifndef VARIABLE_DELAY_H_

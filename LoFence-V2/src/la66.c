@@ -429,9 +429,9 @@ uint8_t LA66_transmitB(uint8_t *fPort, const bool confirm, char *payload, uint8_
 		char *tmp = buffer;
 		
 		*fPort = atoi(strsep(&tmp, ":"));
-		char *_payload = strsep(&tmp, ":");		
+		char *_payload = strsep(&tmp, ":");
 		*rxSize = strlen(_payload) / 2;
-						
+		
 		memset(payload, 0, LA66_MAX_BUFF);
 		
 		strcpy(payload, _payload);

@@ -1,9 +1,9 @@
 /*
- * variable_delay.c
- *
- * Created: 13.09.2023 15:28:41
- *  Author: alexander
- */
+* variable_delay.c
+*
+* Created: 13.09.2023 15:28:41
+*  Author: alexander
+*/
 
 #include <atmel_start.h>
 #include <util/delay.h>
