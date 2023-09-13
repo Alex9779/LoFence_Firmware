@@ -112,7 +112,7 @@ static uint8_t read_line(char *line)
 	#ifdef DEBUG
 	if (i > 0)
 	{
-		sprintf(debug, "DBG line: %s\r\n", line);
+		snprintf(debug, "DBG line: %s\r\n", line);
 		log_serial(debug);
 	}
 	#endif
@@ -133,7 +133,7 @@ static uint8_t send_command(const char *command)
 	}
 	
 	#ifdef DEBUG
-	sprintf(debug, "DBG Sending command: %s", command);
+	snprintf(debug, "DBG Sending command: %s", command);
 	log_serial(debug);
 	#endif
 	
@@ -343,7 +343,7 @@ uint8_t LA66_transmitB(uint8_t *fPort, const bool confirm, char *payload, uint8_
 	// Command format: AT+SENDB=<confirm>,<fPort>,<data_len>,<data>, example AT+SENDB=0,2,8,05820802581ea0a5
 	char buffer[32 + LA66_MAX_BUFF];
 	
-	sprintf(buffer, "AT+SENDB=0%d,%u,%u,%s\r\n", confirm, *fPort, strlen(payload) / 2, payload);
+	snprintf(buffer, "AT+SENDB=0%d,%u,%u,%s\r\n", confirm, *fPort, strlen(payload) / 2, payload);
 	
 	send_command(buffer);
 	

@@ -130,7 +130,7 @@ void measure() {
 
 	volt_bat = (((330000/255*adc_min*2) - 0))/100;
 
-	sprintf(buffer_info, "%d mV\r\n", volt_bat);
+	snprintf(buffer_info, "%d mV\r\n", volt_bat);
 	log_serial(buffer_info);
 
 	// ----------------------------------------------------------------------------------------------
@@ -146,7 +146,7 @@ void measure() {
 
 	volt_fence_plus = (eeprom_read_word(&max3v3_volt)/255*adc_max);
 
-	sprintf(buffer_info, "%d V\r\n", volt_fence_plus);
+	snprintf(buffer_info, "%d V\r\n", volt_fence_plus);
 	log_serial(buffer_info);
 
 	// ----------------------------------------------------------------------------------------------
@@ -162,7 +162,7 @@ void measure() {
 
 	volt_fence_minus = (eeprom_read_word(&max3v3_volt)/255*adc_max);
 
-	sprintf(buffer_info, "%d V\r\n", volt_fence_minus);
+	snprintf(buffer_info, "%d V\r\n", volt_fence_minus);
 	log_serial(buffer_info);
 
 	// ----------------------------------------------------------------------------------------------
@@ -181,7 +181,7 @@ void transmit() {
 	
 	log_serial("Transmitting...\r\n");
 	
-	sprintf(buffer_la, "%04X%04X%04X", volt_bat, volt_fence_plus, volt_fence_minus);
+	snprintf(buffer_la, "%04X%04X%04X", volt_bat, volt_fence_plus, volt_fence_minus);
 	
 	if (LA66_transmitB(&fPort, false, buffer_la, &rxSize) == LA66_SUCCESS)
 	{
@@ -220,7 +220,7 @@ void transmit() {
 void pause() {
 	LED_IDLE_set_level(true);
 	
-	sprintf (buffer_info, "Sleeping for %lu seconds\r\n", eeprom_read_dword(&tdc));
+	snprintf (buffer_info, "Sleeping for %lu seconds\r\n", eeprom_read_dword(&tdc));
 	log_serial(buffer_info);
 	_delay_ms(500);
 	
