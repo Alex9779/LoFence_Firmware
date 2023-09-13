@@ -205,25 +205,37 @@ drivers:
         configuration:
           usart_clock_source: CLKio
 pads:
-  LED_CLK:
-    name: PE0
-    definition: Atmel:ATMega328PB_drivers:1.0.0::ATmega328PB-AU::pad::PE0
+  LED_TX:
+    name: PD5
+    definition: Atmel:ATMega328PB_drivers:1.0.0::ATmega328PB-AU::pad::PD5
     mode: Digital output
-    user_label: LED_CLK
+    user_label: LED_TX
+    configuration: null
+  LED_MSR:
+    name: PD6
+    definition: Atmel:ATMega328PB_drivers:1.0.0::ATmega328PB-AU::pad::PD6
+    mode: Digital output
+    user_label: LED_MSR
     configuration: null
   LED_IDLE:
-    name: PE1
-    definition: Atmel:ATMega328PB_drivers:1.0.0::ATmega328PB-AU::pad::PE1
+    name: PD7
+    definition: Atmel:ATMega328PB_drivers:1.0.0::ATmega328PB-AU::pad::PD7
     mode: Digital output
     user_label: LED_IDLE
     configuration: null
-  LA_RESET:
+  LED_CLK:
     name: PB0
     definition: Atmel:ATMega328PB_drivers:1.0.0::ATmega328PB-AU::pad::PB0
     mode: Digital output
-    user_label: LA_RESET
+    user_label: LED_CLK
     configuration:
       pad_initial_level: Low
+  LA_RESET:
+    name: PB1
+    definition: Atmel:ATMega328PB_drivers:1.0.0::ATmega328PB-AU::pad::PB1
+    mode: Digital output
+    user_label: LA_RESET
+    configuration: null
   MCU_TX:
     name: PB3
     definition: Atmel:ATMega328PB_drivers:1.0.0::ATmega328PB-AU::pad::PB3
@@ -237,18 +249,6 @@ pads:
     user_label: MCU_RX
     configuration:
       pad_pull_config: Pull-up
-  LED_MSR:
-    name: PE2
-    definition: Atmel:ATMega328PB_drivers:1.0.0::ATmega328PB-AU::pad::PE2
-    mode: Digital output
-    user_label: LED_MSR
-    configuration: null
-  LED_TX:
-    name: PE3
-    definition: Atmel:ATMega328PB_drivers:1.0.0::ATmega328PB-AU::pad::PE3
-    mode: Digital output
-    user_label: LED_TX
-    configuration: null
   ADC_MINUS:
     name: PC0
     definition: Atmel:ATMega328PB_drivers:1.0.0::ATmega328PB-AU::pad::PC0
@@ -266,6 +266,12 @@ pads:
     definition: Atmel:ATMega328PB_drivers:1.0.0::ATmega328PB-AU::pad::PC2
     mode: Analog
     user_label: ADC_PLUS
+    configuration: null
+  ACTIVATE:
+    name: PC3
+    definition: Atmel:ATMega328PB_drivers:1.0.0::ATmega328PB-AU::pad::PC3
+    mode: Digital output
+    user_label: ACTIVATE
     configuration: null
   BAT_ADC:
     name: PC4
@@ -294,12 +300,12 @@ pads:
     configuration: null
 toolchain_options:
 - definition:
-    identifier: Atmel:ATMega328PB_drivers:1.0.0::ATmega328PB-AU::environment_definition::All:Microchip.Studio.xc8:7.0.0
+    identifier: Atmel:ATMega328PB_drivers:1.0.0::ATmega328PB-AU::environment_definition::All:Microchip.Studio.gcc:7.0.0
   configuration:
     compiler_config:
-      xc8_compiler_miscellaneous_OtherFlags: -std=gnu99
+      avrgcc_compiler_miscellaneous_OtherFlags: -std=gnu99
     linker_config:
-      xc8_linker_miscellaneous_LinkerFlags: ''
+      avrgcc_linker_miscellaneous_LinkerFlags: ''
 - definition:
     identifier: Atmel:ATMega328PB_drivers:1.0.0::ATmega328PB-AU::environment_definition::All:Atmel.Studio:7.0.0
   configuration:
@@ -308,10 +314,10 @@ toolchain_options:
     linker_config:
       avrgcc_linker_miscellaneous_LinkerFlags: ''
 - definition:
-    identifier: Atmel:ATMega328PB_drivers:1.0.0::ATmega328PB-AU::environment_definition::All:Microchip.Studio.gcc:7.0.0
+    identifier: Atmel:ATMega328PB_drivers:1.0.0::ATmega328PB-AU::environment_definition::All:Microchip.Studio.xc8:7.0.0
   configuration:
     compiler_config:
-      avrgcc_compiler_miscellaneous_OtherFlags: -std=gnu99
+      xc8_compiler_miscellaneous_OtherFlags: -std=gnu99
     linker_config:
-      avrgcc_linker_miscellaneous_LinkerFlags: ''
+      xc8_linker_miscellaneous_LinkerFlags: ''
 static_files: []

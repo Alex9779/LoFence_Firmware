@@ -106,6 +106,18 @@ void system_init()
 	/* PORT setting on PB0 */
 
 	// Set pin direction to output
+	LED_CLK_set_dir(PORT_DIR_OUT);
+
+	LED_CLK_set_level(
+	    // <y> Initial level
+	    // <id> pad_initial_level
+	    // <false"> Low
+	    // <true"> High
+	    false);
+
+	/* PORT setting on PB1 */
+
+	// Set pin direction to output
 	LA_RESET_set_dir(PORT_DIR_OUT);
 
 	LA_RESET_set_level(
@@ -137,6 +149,18 @@ void system_init()
 	// Disable pull-up.
 	ADC_PLUS_set_pull_mode(PORT_PULL_OFF);
 
+	/* PORT setting on PC3 */
+
+	// Set pin direction to output
+	ACTIVATE_set_dir(PORT_DIR_OUT);
+
+	ACTIVATE_set_level(
+	    // <y> Initial level
+	    // <id> pad_initial_level
+	    // <false"> Low
+	    // <true"> High
+	    false);
+
 	/* PORT setting on PC4 */
 
 	// Disable pull-up.
@@ -154,31 +178,19 @@ void system_init()
 	    // <true"> High
 	    true);
 
-	/* PORT setting on PE0 */
+	/* PORT setting on PD5 */
 
 	// Set pin direction to output
-	LED_CLK_set_dir(PORT_DIR_OUT);
+	LED_TX_set_dir(PORT_DIR_OUT);
 
-	LED_CLK_set_level(
+	LED_TX_set_level(
 	    // <y> Initial level
 	    // <id> pad_initial_level
 	    // <false"> Low
 	    // <true"> High
 	    false);
 
-	/* PORT setting on PE1 */
-
-	// Set pin direction to output
-	LED_IDLE_set_dir(PORT_DIR_OUT);
-
-	LED_IDLE_set_level(
-	    // <y> Initial level
-	    // <id> pad_initial_level
-	    // <false"> Low
-	    // <true"> High
-	    false);
-
-	/* PORT setting on PE2 */
+	/* PORT setting on PD6 */
 
 	// Set pin direction to output
 	LED_MSR_set_dir(PORT_DIR_OUT);
@@ -190,12 +202,12 @@ void system_init()
 	    // <true"> High
 	    false);
 
-	/* PORT setting on PE3 */
+	/* PORT setting on PD7 */
 
 	// Set pin direction to output
-	LED_TX_set_dir(PORT_DIR_OUT);
+	LED_IDLE_set_dir(PORT_DIR_OUT);
 
-	LED_TX_set_level(
+	LED_IDLE_set_level(
 	    // <y> Initial level
 	    // <id> pad_initial_level
 	    // <false"> Low
