@@ -190,7 +190,7 @@ void transmit() {
 			{
 				if (rxSize == 4)
 				{
-					eeprom_write_dword(&tdc, ((uint32_t)buffer_la[1]<<16 | buffer_la[2]<<8 | buffer_la[3] ));
+					eeprom_write_dword(&tdc, ((uint32_t)buffer_la[1]<<16 | buffer_la[2]<<8 | buffer_la[3]));
 				}
 				break;
 			}
