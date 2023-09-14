@@ -1,7 +1,7 @@
 /*!
 @file	LA66.c
 @author	Alexander Leisentritt (alexander.leisentritt@alitecs.de)
-@date	August 2023
+@date	August 2023 - September 2023
 @brief	A library for embedded platforms that allows for interaction with a Dragino LA66.
 
 @see LA66.h
@@ -21,7 +21,8 @@ char debug[32 + LA66_MAX_BUFF];
 // FUNCTIONS
 //===========
 // PRIVATE
-
+//! Convert string with byte values in hex text format to buffer with hex values
+// e. g. "0100012C" --> { 0x01, 0x00, 0x01, 0x2C}
 static void readHex(char* buf, char* txt)
 {
 	char b[3] = "00";
@@ -34,7 +35,7 @@ static void readHex(char* buf, char* txt)
 	}
 }
 
-//! read a single byte from via UART from the LA66
+//! Read a single byte from via UART from the LA66
 // while there is data, return null char if not
 static char read(const bool wait)
 {
@@ -48,7 +49,7 @@ static char read(const bool wait)
 	}
 }
 
-//! write a string of bytes via UART to the LA66
+//! Write a string of bytes via UART to the LA66
 static void write(const char *buff)
 {
 	for (uint8_t i = 0; i < strlen(buff); i++)
@@ -59,6 +60,7 @@ static void write(const char *buff)
 	while (USART_0_is_tx_busy()) {}
 }
 
+//! Clear LA66 RX buffer.
 static void clear_read()
 {
 	while(USART_0_is_rx_ready()) {
@@ -69,10 +71,10 @@ static void clear_read()
 	}
 }
 
-// Reads from the RX buffer into line until '\n' or '\r' or EOB
-// '\n' or '\r' are not always returned in the same order
-// line does not contain '\n' or '\r'
-// returns length of line
+// Reads from the RX buffer into line until '\n' or '\r' or EOB.
+// '\n' or '\r' are not always returned in the same order.
+// Line does not contain '\n' or '\r'.
+// Returns length of line.
 static uint8_t read_line(char *line)
 {
 	// initialize line length counter
@@ -148,7 +150,8 @@ static uint8_t send_command(const char *command)
 	return LA66_SUCCESS;
 }
 
-// Sends a command to the LA66 and sets the response in buffer
+// PUBLIC
+// Sends a query command to the LA66 and sets the response.
 uint8_t LA66_query_command(const char *command, char *response)
 {
 	uint8_t ret = LA66_ERR_PANIC;
@@ -213,8 +216,6 @@ uint8_t LA66_query_command(const char *command, char *response)
 	return ret;
 }
 
-// PUBLIC
-// system
 // Resets the LA66 by toggling the RESET pin
 void LA66_reset()
 {
@@ -223,6 +224,7 @@ void LA66_reset()
 	LA66_activate();
 }
 
+// Activates the LA66 by enabling the RESET pin
 void LA66_activate()
 {
 	LA_RESET_set_level(true);
@@ -230,6 +232,7 @@ void LA66_activate()
 	_delay_ms(1000);
 }
 
+// Deactivates the LA66 by disabling the RESET pin
 void LA66_deactivate()
 {
 	LA_RESET_set_level(false);
@@ -237,8 +240,9 @@ void LA66_deactivate()
 	_delay_ms(100);
 }
 
-// LoRa
-//  Initialises all the LA66 MAC settings required to run LoRa commands (join, tx, etc).
+
+// The LA66 automatically tries to join a network when activated.
+// Wait for joined a network.
 uint8_t LA66_waitForJoin()
 {
 	uint8_t ret = LA66_ERR_PANIC;
@@ -277,6 +281,7 @@ uint8_t LA66_waitForJoin()
 	return ret;
 }
 
+// Get the current DR.
 uint8_t LA66_getDr()
 {
 	LA66_buffer response;
@@ -289,6 +294,7 @@ uint8_t LA66_getDr()
 	return 0;
 }
 
+// Get RX1 delay.
 uint16_t LA66_getRx1Dl()
 {
 	LA66_buffer response;
@@ -301,6 +307,7 @@ uint16_t LA66_getRx1Dl()
 	return 0;
 }
 
+// Get RX2 delay.
 uint16_t LA66_getRx2Dl()
 {
 	LA66_buffer response;
@@ -313,7 +320,8 @@ uint16_t LA66_getRx2Dl()
 	return 0;
 }
 
-// Sends a confirmed/unconfirmed frame with an application payload of buff.
+// Sends a confirmed/unconfirmed frame with an application payload.
+// Sets a recieved payload and its fPort and size.
 uint8_t LA66_transmitB(uint8_t *fPort, const bool confirm, char *payload, uint8_t *rxSize)
 {
 	uint8_t ret = LA66_ERR_PANIC;
