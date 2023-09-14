@@ -21,7 +21,7 @@ volatile uint8_t adc_min = 0;
 uint8_t adc_val = 0;
 
 char buffer_info[LA66_MAX_BUFF];
-char buffer_la[LA66_MAX_BUFF];
+LA66_buffer buffer_la;
 
 uint16_t volt_bat = 0;
 uint16_t volt_fence_plus = 0;

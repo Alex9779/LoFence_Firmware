@@ -31,6 +31,8 @@
 #define AT_BUSY_ERROR "AT_BUSY_ERROR"
 #define AT_NO_NET_JOINED "AT_NO_NET_JOINED"
 
+typedef char LA66_buffer[LA66_MAX_BUFF];
+
 extern void log_serial(char msg[]);
 
 //=========

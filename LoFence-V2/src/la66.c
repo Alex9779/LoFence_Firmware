@@ -279,7 +279,7 @@ uint8_t LA66_waitForJoin()
 
 uint8_t LA66_getDr()
 {
-	char response[LA66_MAX_BUFF];
+	LA66_buffer response;
 	
 	if (LA66_query_command("AT+DR=?\r\n", response) == LA66_SUCCESS)
 	{
@@ -291,7 +291,7 @@ uint8_t LA66_getDr()
 
 uint16_t LA66_getRx1Dl()
 {
-	char response[LA66_MAX_BUFF];
+	LA66_buffer response;
 	
 	if (LA66_query_command("AT+RX1DL=?\r\n", response) == LA66_SUCCESS)
 	{
@@ -303,7 +303,7 @@ uint16_t LA66_getRx1Dl()
 
 uint16_t LA66_getRx2Dl()
 {
-	char response[LA66_MAX_BUFF];
+	LA66_buffer response;
 	
 	if (LA66_query_command("AT+RX2DL=?\r\n", response) == LA66_SUCCESS)
 	{
