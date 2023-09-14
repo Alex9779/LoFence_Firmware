@@ -33,7 +33,7 @@
 
 typedef char LA66_buffer[LA66_MAX_BUFF];
 
-extern void log_serial(char msg[]);
+extern void log_serial(char *msg);
 
 //=========
 // GLOBALS
