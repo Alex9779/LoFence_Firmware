@@ -318,27 +318,6 @@ uint8_t LA66_transmitB(uint8_t *fPort, const bool confirm, char *payload, uint8_
 {
 	uint8_t ret = LA66_ERR_PANIC;
 	
-	//// figure out max payload length based on data rate, currently only for EU868
-	//uint8_t dr = LA66_getDr();
-	//uint8_t max_len = 0;
-	//
-	//if (dr == 0 || dr == 1 || dr == 2)
-	//{
-	//max_len = 64;
-	//}
-	//else if (dr == 3)
-	//{
-	//max_len = 128;
-	//}
-	//else if (dr == 4 || dr == 5 || dr == 6)
-	//{
-	//max_len = 235;
-	//}
-	//else
-	//{
-	//max_len = 235;
-	//}
-	
 	// send command
 	// Command format: AT+SENDB=<confirm>,<fPort>,<data_len>,<data>, example AT+SENDB=0,2,8,05820802581ea0a5
 	char buffer[32 + LA66_MAX_BUFF];
