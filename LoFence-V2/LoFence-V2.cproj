@@ -155,8 +155,7 @@
         </avrgcc.assembler.general.IncludePaths>
       </AvrGcc>
     </ToolchainSettings>
-    <PostBuildEvent>java -jar "C:\Program Files (x86)\ISPnubCreator\ISPnubCreator_v1.4.jar" $(SolutionDir)LoFence-V2\LoFence-V2_Release.ispnub
-avrdude -c usbasp -p atmega1284p -U hfuse:w:0xD9:m -U lfuse:w:0xE2:m -U flash:w:"$(OutputDirectory)\ispnub.hex":i -U lock:w:0xFC:m</PostBuildEvent>
+    <PostBuildEvent>java -jar "C:\Program Files (x86)\ISPnubCreator\ISPnubCreator_v1.4.jar" $(SolutionDir)LoFence-V2\LoFence-V2_Release.ispnub</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <ToolchainSettings>
@@ -210,7 +209,7 @@ avrdude -c usbasp -p atmega1284p -U hfuse:w:0xD9:m -U lfuse:w:0xE2:m -U flash:w:
       </AvrGcc>
     </ToolchainSettings>
     <PostBuildEvent>java -jar "C:\Program Files (x86)\ISPnubCreator\ISPnubCreator_v1.4.jar" $(SolutionDir)LoFence-V2\LoFence-V2_Debug.ispnub
-avrdude -c usbasp -p atmega1284p -U hfuse:w:0xD9:m -U lfuse:w:0xE2:m -U flash:w:"$(OutputDirectory)\ispnub.hex":i -U lock:w:0xFC:m</PostBuildEvent>
+</PostBuildEvent>
   </PropertyGroup>
   <ItemGroup>
     <Folder Include="Config\" />
