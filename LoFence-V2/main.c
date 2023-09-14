@@ -220,7 +220,7 @@ void transmit() {
 void pause() {
 	LED_IDLE_set_level(true);
 	
-	snprintf(buffer_info, sizeof(buffer_info), "Sleeping for %lu seconds\r\n", eeprom_read_dword(&tdc));
+	snprintf(buffer_info, sizeof(buffer_info), "Sleeping for %lu seconds...\r\n", eeprom_read_dword(&tdc));
 	log_serial(buffer_info);
 	_delay_ms(500);
 	
