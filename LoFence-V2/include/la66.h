@@ -1,7 +1,7 @@
 /*!
 @file	la66.h
 @author	Alexander Leisentritt (alexander.leisentritt@alitecs.de)
-@date	August 2023
+@date	August 2023 - September 2023
 @brief	A library for embedded platforms that allows for interaction with a Dragino LA66.
 */
 
