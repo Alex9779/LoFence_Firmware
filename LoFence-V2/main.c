@@ -190,7 +190,7 @@ void transmit() {
 
 		switch (buffer_la[0] & 0xFF)
 		{
-			case 0x01:
+			case 0x01: // transmit duty cycle
 			{
 				if (rxSize == 4)
 				{
@@ -198,7 +198,7 @@ void transmit() {
 				}
 				break;
 			}
-			case 0x10:
+			case 0x10: // measurement delay for each polarization
 			{
 				if (rxSize == 3)
 				{
@@ -206,7 +206,7 @@ void transmit() {
 				}
 				break;
 			}
-			case 0x11:
+			case 0x11: // maximum fence voltage at ADC max, this depends on actual resistor values
 			{
 				if (rxSize == 3)
 				{
