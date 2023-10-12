@@ -129,7 +129,7 @@ void measure() {
 	ADCSRA &= ~(1 << ADEN);
 	BAT_GND_set_level(true);
 
-	volt_bat = (((330000/255*adc_min*2) - 0))/100;
+	volt_bat = (((330000/255*adc_min*2) - 0))/100 + 125;
 
 	snprintf(buffer_info, sizeof(buffer_info), "%d mV\r\n", volt_bat);
 	log_serial(buffer_info);
