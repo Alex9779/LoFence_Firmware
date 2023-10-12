@@ -13,6 +13,8 @@
 uint32_t EEMEM tdc = INTERVAL_SECONDS; // transmit duty cycle
 uint16_t EEMEM msr_ms = MEASURE_MS;
 uint16_t EEMEM max3v3_volt = 12000; // theoretical maximum value
+uint16_t EEMEM bat_low = 3400; // low threshold voltage in mV
+uint8_t EEMEM bat_low_count_max = 5; // maximum cycles the battery can be under lower threshold
 
 volatile uint32_t seconds = 0;
 
@@ -27,6 +29,9 @@ LA66_buffer buffer_la;
 uint16_t volt_bat = 0;
 uint16_t volt_fence_plus = 0;
 uint16_t volt_fence_minus = 0;
+
+uint8_t bat_low_count = 0;
+bool deactivate = false;
 
 // ----------------------------------------------------------------------------------------------
 
@@ -214,6 +219,22 @@ void transmit() {
 				}
 				break;
 			}
+			case 0x12: // battery low voltage 
+			{
+				if (rxSize == 3)
+				{
+					eeprom_write_word(&bat_low, (buffer_la[1]<<8 | buffer_la[2]));
+				}
+				break;
+			}
+			case 0x13: // battery low cycle count
+			{
+				if (rxSize == 2)
+				{
+					eeprom_write_byte(&bat_low_count_max, buffer_la[1]);
+				}
+				break;
+			}
 		}
 	}
 	
@@ -222,21 +243,53 @@ void transmit() {
 
 void check_battery()
 {
-	if (volt_bat < 3400)
+	// if maximum cycles the battery has been low is not reached
+	// and if the battery is above the absolute minimum of 3100mV
+	if (bat_low_count < eeprom_read_byte(&bat_low_count_max)
+		&& volt_bat > 3100
+		&& volt_bat < eeprom_read_word(&bat_low))
 	{
-		LED_IDLE_set_level(false);
-		LED_MSR_set_level(false);
-		LED_TX_set_level(false);
-		
-		sleep_set_mode(2); // set to power down mode
-		
-		ACTIVATE_set_level(false);
-		
-		sleep_enable();
-		while (1)
-		{
-			sleep_mode();
-		}
+		bat_low_count++;
+	}
+	// if battery is lower than absolue minimum
+	else if (volt_bat <= 3100)
+	{
+		// set deactivaion flag
+		deactivate = true;
+	}
+	// if counter reached and battery still low
+	else if (bat_low_count >= eeprom_read_byte(&bat_low_count_max)
+		&& volt_bat < eeprom_read_word(&bat_low))
+	{
+		// set deactivaion flag
+		deactivate = true;
+	}
+
+	// Deactivation is postponed to next cycle because it triggers an uplink
+	// with zero battery voltage and doing so right after a real measurement
+	// could be problematic.
+	// The uplink will contain the same fence values as the previous
+	// to prevent triggering false alarms.
+}
+
+void deactivate()
+{
+	volt_bat = 0;
+
+	transmit();
+
+	LED_IDLE_set_level(false);
+	LED_MSR_set_level(false);
+	LED_TX_set_level(false);
+	
+	sleep_set_mode(2); // set to power down mode
+	
+	ACTIVATE_set_level(false);
+	
+	sleep_enable();
+	while (1)
+	{
+		sleep_mode();
 	}
 }
 
@@ -295,6 +348,12 @@ int main(void) {
 	
 	while (1)
 	{
+		// check for pending deactivation
+		if (deactivate)
+		{
+			deactivate();
+		}
+
 		measure();
 
 		transmit();
