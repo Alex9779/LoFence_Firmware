@@ -6,15 +6,14 @@
 #include "variable_delay.h"
 #include "main.h"
 
-
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
 uint32_t EEMEM tdc = INTERVAL_SECONDS; // transmit duty cycle
-uint16_t EEMEM msr_ms = MEASURE_MS; // milliseconds to measure each fence pole
-uint16_t EEMEM max3v3_volt = 12000; // theoretical maximum fence voltage value
-uint16_t EEMEM bat_low = 3400; // low threshold voltage in mV
-uint8_t EEMEM bat_low_count_max = 5; // maximum cycles the battery can be under lower threshold
+uint16_t EEMEM msr_ms = MEASURE_MS;	   // milliseconds to measure each fence pole
+uint16_t EEMEM max3v3_volt = 12000;	   // theoretical maximum fence voltage value
+uint16_t EEMEM bat_low = 3400;		   // low threshold voltage in mV
+uint8_t EEMEM bat_low_count_max = 5;   // maximum cycles the battery can be under lower threshold
 
 volatile uint32_t seconds = 0;
 
@@ -35,17 +34,21 @@ bool deactivate = false;
 
 // ----------------------------------------------------------------------------------------------
 
-ISR(TIMER2_OVF_vect) {
+ISR(TIMER2_OVF_vect)
+{
 	// see https://www.mikrocontroller.net/articles/AVR-GCC-Tutorial/Die_Timer_und_Z%C3%A4hler_des_AVR#Timer2_im_Asynchron_Mode
 	TCCR2B = TCCR2B;
 	seconds++;
 	LED_CLK_toggle_level();
-	while(ASSR & ((1<<TCN2UB) | (1<<OCR2AUB) | (1<<OCR2BUB) | (1<<TCR2AUB) | (1<<TCR2BUB)));
+	while (ASSR & ((1 << TCN2UB) | (1 << OCR2AUB) | (1 << OCR2BUB) | (1 << TCR2AUB) | (1 << TCR2BUB)))
+		;
 }
 
-ISR(ADC_vect) {
+ISR(ADC_vect)
+{
 	adc_val = ADCH;
-	if (adc_clear == 1) {
+	if (adc_clear == 1)
+	{
 		adc_clear = 0;
 		adc_max = 0x00;
 		adc_min = 0xFF;
@@ -71,56 +74,62 @@ void log_serial(char *msg)
 {
 	for (uint8_t i = 0; i < strlen(msg); i++)
 	{
-		while (!USART_1_is_tx_ready()) {}
+		while (!USART_1_is_tx_ready())
+		{
+		}
 		USART_1_write(msg[i]);
 	}
-	while (USART_1_is_tx_busy()) {}
+	while (USART_1_is_tx_busy())
+	{
+	}
 }
 
 // ----------------------------------------------------------------------------------------------
 
-void adc_init() {
+void adc_init()
+{
 	PRR0 &= ~(1 << PRADC); // Enable
-	
+
 	DIDR0 = (1 << ADC0D) | (1 << ADC2D) | (1 << ADC4D); // Disable input buffer
-	
+
 	ADMUX = 0x00;
 	ADMUX |= (0 << REFS1) | (1 << REFS0); // AVCC with external capacitor at AREF pin
-	ADMUX |= (1 << ADLAR); // Left Adjust Result: enabled
-	
+	ADMUX |= (1 << ADLAR);				  // Left Adjust Result: enabled
+
 	ADCSRA = 0x00;
 	ADCSRA |= (1 << ADATE); // Auto Trigger: enabled
-	ADCSRA |= (1 << ADIE); // ADC Interrupt: enabled
-	
+	ADCSRA |= (1 << ADIE);	// ADC Interrupt: enabled
+
 	// Safe range: 50khz - 200khz
-	//ADCSRA |= (1 << ADPS2) | (0 << ADPS1) | (0 << ADPS0); // 100  16 500khz
+	// ADCSRA |= (1 << ADPS2) | (0 << ADPS1) | (0 << ADPS0); // 100  16 500khz
 	ADCSRA |= (1 << ADPS2) | (0 << ADPS1) | (1 << ADPS0); // 101  32 250khz
-	//ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (0 << ADPS0); // 110  64 125khz
-	//ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0); // 111 128  62khz
-	
+	// ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (0 << ADPS0); // 110  64 125khz
+	// ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0); // 111 128  62khz
+
 	ADCSRB = 0x00;
 	ADCSRB |= (0 << ADTS2) | (0 << ADTS1) | (0 << ADTS0); // Free Running mode
-	ADCSRB |= (0 << ACME); // Analog Comparator Multiplexer: disabled
+	ADCSRB |= (0 << ACME);								  // Analog Comparator Multiplexer: disabled
 
 	ACSR |= (1 << ACD); // Disable Comparator
 
 	ADCSRA &= ~(1 << ADEN); // Disable ADC
-	PRR0 |= (1 << PRADC); // Disable ADC
+	PRR0 |= (1 << PRADC);	// Disable ADC
 }
 
-void measure() {
+void measure()
+{
 	LED_MSR_set_level(true);
-	
+
 	log_serial("Measuring...\r\n");
-	
+
 	// ----------------------------------------------------------------------------------------------
 
 	PRR0 &= ~(1 << PRADC); // Enable ADC
 	ADC_POWER_set_level(true);
 	_delay_ms(1000);
-	
+
 	// ----------------------------------------------------------------------------------------------
-	
+
 	log_serial("Measuring battery: ");
 
 	BAT_GND_set_level(false);
@@ -134,7 +143,7 @@ void measure() {
 	ADCSRA &= ~(1 << ADEN);
 	BAT_GND_set_level(true);
 
-	volt_bat = (((330000/255*adc_min*2) - 0))/100 + 125;
+	volt_bat = (((330000 / 255 * adc_min * 2) - 0)) / 100 + 125;
 	// 125mV is the measured voltage dfrop of the Schottky diode
 
 	snprintf(buffer_info, sizeof(buffer_info), "%d mV\r\n", volt_bat);
@@ -143,7 +152,7 @@ void measure() {
 	// ----------------------------------------------------------------------------------------------
 
 	log_serial("Measuring fence positive: ");
-	
+
 	ADMUX = (ADMUX & 0xE0) | (1 << MUX1); // Pin 2
 	ADCSRA |= (1 << ADEN);
 	ADCSRA |= (1 << ADSC);
@@ -151,7 +160,7 @@ void measure() {
 	_delay_100ms(eeprom_read_word(&msr_ms));
 	ADCSRA &= ~(1 << ADEN);
 
-	volt_fence_plus = (eeprom_read_word(&max3v3_volt)/255*adc_max);
+	volt_fence_plus = (eeprom_read_word(&max3v3_volt) / 255 * adc_max);
 
 	snprintf(buffer_info, sizeof(buffer_info), "%d V\r\n", volt_fence_plus);
 	log_serial(buffer_info);
@@ -167,7 +176,7 @@ void measure() {
 	_delay_100ms(eeprom_read_word(&msr_ms));
 	ADCSRA &= ~(1 << ADEN);
 
-	volt_fence_minus = (eeprom_read_word(&max3v3_volt)/255*adc_max);
+	volt_fence_minus = (eeprom_read_word(&max3v3_volt) / 255 * adc_max);
 
 	snprintf(buffer_info, sizeof(buffer_info), "%d V\r\n", volt_fence_minus);
 	log_serial(buffer_info);
@@ -180,16 +189,17 @@ void measure() {
 	LED_MSR_set_level(false);
 }
 
-void transmit() {
+void transmit()
+{
 	LED_TX_set_level(true);
-	
+
 	uint8_t fPort = 1;
 	uint8_t rxSize = 0;
-	
+
 	log_serial("Transmitting...\r\n");
-	
+
 	snprintf(buffer_la, sizeof(buffer_la), "%04X%04X%04X", volt_bat, volt_fence_plus, volt_fence_minus);
-	
+
 	if (LA66_transmitB(&fPort, false, buffer_la, &rxSize) == LA66_SUCCESS)
 	{
 		log_serial("Downlink received...\r\n");
@@ -200,7 +210,7 @@ void transmit() {
 			{
 				if (rxSize == 4)
 				{
-					eeprom_write_dword(&tdc, ((uint32_t)buffer_la[1]<<16 | buffer_la[2]<<8 | buffer_la[3]));
+					eeprom_write_dword(&tdc, ((uint32_t)buffer_la[1] << 16 | buffer_la[2] << 8 | buffer_la[3]));
 				}
 				break;
 			}
@@ -208,7 +218,7 @@ void transmit() {
 			{
 				if (rxSize == 3)
 				{
-					eeprom_write_word(&msr_ms, (buffer_la[1]<<8 | buffer_la[2]));
+					eeprom_write_word(&msr_ms, (buffer_la[1] << 8 | buffer_la[2]));
 				}
 				break;
 			}
@@ -216,15 +226,15 @@ void transmit() {
 			{
 				if (rxSize == 3)
 				{
-					eeprom_write_word(&max3v3_volt, (buffer_la[1]<<8 | buffer_la[2]));
+					eeprom_write_word(&max3v3_volt, (buffer_la[1] << 8 | buffer_la[2]));
 				}
 				break;
 			}
-			case 0x12: // battery low voltage 
+			case 0x12: // battery low voltage
 			{
 				if (rxSize == 3)
 				{
-					eeprom_write_word(&bat_low, (buffer_la[1]<<8 | buffer_la[2]));
+					eeprom_write_word(&bat_low, (buffer_la[1] << 8 | buffer_la[2]));
 				}
 				break;
 			}
@@ -238,7 +248,7 @@ void transmit() {
 			}
 		}
 	}
-	
+
 	LED_TX_set_level(false);
 }
 
@@ -246,9 +256,7 @@ void check_battery()
 {
 	// if maximum cycles the battery has been low is not reached
 	// and if the battery is above the absolute minimum of 3100mV
-	if (bat_low_count < eeprom_read_byte(&bat_low_count_max)
-		&& volt_bat > 3100
-		&& volt_bat < eeprom_read_word(&bat_low))
+	if (bat_low_count < eeprom_read_byte(&bat_low_count_max) && volt_bat > 3100 && volt_bat < eeprom_read_word(&bat_low))
 	{
 		bat_low_count++;
 	}
@@ -259,8 +267,7 @@ void check_battery()
 		deactivate = true;
 	}
 	// if counter reached and battery still low
-	else if (bat_low_count >= eeprom_read_byte(&bat_low_count_max)
-		&& volt_bat < eeprom_read_word(&bat_low))
+	else if (bat_low_count >= eeprom_read_byte(&bat_low_count_max) && volt_bat < eeprom_read_word(&bat_low))
 	{
 		// set deactivaion flag
 		deactivate = true;
@@ -282,11 +289,11 @@ void deactivate()
 	LED_IDLE_set_level(false);
 	LED_MSR_set_level(false);
 	LED_TX_set_level(false);
-	
+
 	sleep_set_mode(2); // set to power down mode
-	
+
 	ACTIVATE_set_level(false);
-	
+
 	sleep_enable();
 	while (1)
 	{
@@ -294,51 +301,53 @@ void deactivate()
 	}
 }
 
-void pause() {
+void pause()
+{
 	LED_IDLE_set_level(true);
-	
+
 	snprintf(buffer_info, sizeof(buffer_info), "Sleeping for %lu seconds...\r\n", eeprom_read_dword(&tdc));
 	log_serial(buffer_info);
 	_delay_ms(500);
-	
+
 	power_save(eeprom_read_dword(&tdc) + (rand() % (RANDOMNESS * 2) - RANDOMNESS));
-	
+
 	LED_IDLE_set_level(false);
 }
 
 // ----------------------------------------------------------------------------------------------
 
-int main(void) {
+int main(void)
+{
 
 	atmel_start_init();
-	
+
 	LED_IDLE_set_level(true);
 	LED_MSR_set_level(true);
 	LED_TX_set_level(true);
-	
+
 	log_serial("\r\n");
 	log_serial("LoFence-V2 v0.1 by Alex9779\r\n");
 	log_serial("https://github.com/alex9779/lofence-v2\r\n");
 	log_serial("\r\n");
-	
+
 	_delay_ms(1000);
-	
+
 	ACTIVATE_set_level(true);
-	
+
 	LED_IDLE_set_level(false);
 
 	log_serial("Initializing ADC...\r\n");
 	adc_init();
 	LED_MSR_set_level(false);
-	
+
 	log_serial("Activating LA66 module...\r\n");
 	LA66_reset();
-	
+
 	log_serial("Waiting to join network...\r\n");
 	if (LA66_waitForJoin() == LA66_ERR_PANIC)
 	{
 		LA66_deactivate();
-		
+
 		while (1)
 		{
 			LED_TX_toggle_level();
@@ -346,7 +355,7 @@ int main(void) {
 		}
 	}
 	LED_TX_set_level(false);
-	
+
 	while (1)
 	{
 		// check for pending deactivation
@@ -358,10 +367,9 @@ int main(void) {
 		measure();
 
 		transmit();
-		
+
 		check_battery();
-		
+
 		pause();
 	}
-	
 }
