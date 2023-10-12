@@ -9,11 +9,11 @@
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
-uint32_t EEMEM tdc = INTERVAL_SECONDS; // transmit duty cycle
-uint16_t EEMEM msr_ms = MEASURE_MS;	   // milliseconds to measure each fence pole
-uint16_t EEMEM max3v3_volt = 12000;	   // theoretical maximum fence voltage value
-uint16_t EEMEM bat_low = 3400;		   // low threshold voltage in mV
-uint8_t EEMEM bat_low_count_max = 5;   // maximum cycles the battery can be under lower threshold
+uint32_t EEMEM tdc = INTERVAL_SECONDS;
+uint16_t EEMEM msr_ms = MEASURE_MS;
+uint16_t EEMEM max3v3_volt = MAXIMUM_FENCE_VOLTAGE;
+uint16_t EEMEM bat_low = BATTERY_LOW_THRESHOLD;
+uint8_t EEMEM bat_low_count_max = BATTERY_LOW_MAX_CYCLES;
 
 volatile uint32_t seconds = 0;
 
@@ -256,7 +256,7 @@ void check_battery()
 {
 	// if maximum cycles the battery has been low is not reached
 	// and if the battery is above the absolute minimum of 3100mV
-	if (bat_low_count < eeprom_read_byte(&bat_low_count_max) && volt_bat > 3100 && volt_bat < eeprom_read_word(&bat_low))
+	if (bat_low_count < eeprom_read_byte(&bat_low_count_max) && volt_bat > BATTERY_ABSOLUTE_MINIMUM && volt_bat < eeprom_read_word(&bat_low))
 	{
 		bat_low_count++;
 	}
