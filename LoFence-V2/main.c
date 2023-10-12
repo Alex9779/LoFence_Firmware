@@ -186,6 +186,8 @@ void transmit() {
 	
 	if (LA66_transmitB(&fPort, false, buffer_la, &rxSize) == LA66_SUCCESS)
 	{
+		log_serial("Downlink received...\r\n");
+
 		switch (buffer_la[0] & 0xFF)
 		{
 			case 0x01:
