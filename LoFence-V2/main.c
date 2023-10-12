@@ -11,8 +11,8 @@
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
 uint32_t EEMEM tdc = INTERVAL_SECONDS; // transmit duty cycle
-uint16_t EEMEM msr_ms = MEASURE_MS;
-uint16_t EEMEM max3v3_volt = 12000; // theoretical maximum value
+uint16_t EEMEM msr_ms = MEASURE_MS; // milliseconds to measure each fence pole
+uint16_t EEMEM max3v3_volt = 12000; // theoretical maximum fence voltage value
 uint16_t EEMEM bat_low = 3400; // low threshold voltage in mV
 uint8_t EEMEM bat_low_count_max = 5; // maximum cycles the battery can be under lower threshold
 
@@ -135,6 +135,7 @@ void measure() {
 	BAT_GND_set_level(true);
 
 	volt_bat = (((330000/255*adc_min*2) - 0))/100 + 125;
+	// 125mV is the measured voltage dfrop of the Schottky diode
 
 	snprintf(buffer_info, sizeof(buffer_info), "%d mV\r\n", volt_bat);
 	log_serial(buffer_info);
@@ -203,7 +204,7 @@ void transmit() {
 				}
 				break;
 			}
-			case 0x10: // measurement delay for each polarization
+			case 0x10: // measurement delay for each pole
 			{
 				if (rxSize == 3)
 				{
