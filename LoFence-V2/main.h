@@ -18,7 +18,8 @@
 // battery low threshold voltage in mV
 #define BATTERY_LOW_THRESHOLD 3400
 
-// maximum amount of cycle the battery can be low before deactivation
+// maximum amount of full measurement cycles
+// the battery can be low before deactivation
 #define BATTERY_LOW_MAX_CYCLES 5
 
 // absolute minimum battery voltage in mV
