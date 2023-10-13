@@ -26,14 +26,7 @@
 // which triggers deactivation right away (next cycle)
 #define BATTERY_ABSOLUTE_MINIMUM 3100
 
-void power_save(uint32_t sec);
 void log_serial(char *msg);
-
-void adc_init();
-
-void measure();
-void transmit();
-void pause();
 
 int main(void);
 
