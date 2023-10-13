@@ -326,7 +326,7 @@ int main(void)
 	LED_TX_set_level(true);
 
 	log_serial("\r\n");
-	log_serial("LoFence-V2 v0.1 by Alex9779\r\n");
+	log_serial("LoFence-V2 v0.9 by Alex9779\r\n");
 	log_serial("https://github.com/alex9779/lofence-v2\r\n");
 	log_serial("\r\n");
 
