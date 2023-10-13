@@ -30,7 +30,7 @@ uint16_t volt_fence_plus = 0;
 uint16_t volt_fence_minus = 0;
 
 uint8_t bat_low_count = 0;
-bool deactivate = false;
+bool do_deactivate = false;
 
 // ----------------------------------------------------------------------------------------------
 
@@ -264,13 +264,13 @@ void check_battery()
 	else if (volt_bat <= 3100)
 	{
 		// set deactivaion flag
-		deactivate = true;
+		do_deactivate = true;
 	}
 	// if counter reached and battery still low
 	else if (bat_low_count >= eeprom_read_byte(&bat_low_count_max) && volt_bat < eeprom_read_word(&bat_low))
 	{
 		// set deactivaion flag
-		deactivate = true;
+		do_deactivate = true;
 	}
 
 	// Deactivation is postponed to next cycle because it triggers an uplink
@@ -359,7 +359,7 @@ int main(void)
 	while (1)
 	{
 		// check for pending deactivation
-		if (deactivate)
+		if (do_deactivate)
 		{
 			deactivate();
 		}
