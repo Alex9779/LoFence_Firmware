@@ -189,7 +189,7 @@ void measure()
 	LED_MSR_set_level(false);
 }
 
-void transmit(const bool error_out)
+void transmit(const bool confirm, const bool error_out)
 {
 	LED_TX_set_level(true);
 
@@ -200,7 +200,7 @@ void transmit(const bool error_out)
 
 	snprintf(buffer_la, sizeof(buffer_la), "%04X%04X%04X", volt_bat, volt_fence_plus, volt_fence_minus);
 
-	uint8_t ret = LA66_transmitB(&fPort, false, buffer_la, &rxSize);
+	uint8_t ret = LA66_transmitB(&fPort, confirm, buffer_la, &rxSize);
 
 	switch (ret)
 	{
@@ -299,7 +299,7 @@ void deactivate()
 {
 	volt_bat = 0;
 
-	transmit(false);
+	transmit(true, false);
 
 	LED_IDLE_set_level(false);
 	LED_MSR_set_level(false);
@@ -381,7 +381,7 @@ int main(void)
 
 		measure();
 
-		transmit(true);
+		transmit(false, true);
 
 		check_battery();
 
