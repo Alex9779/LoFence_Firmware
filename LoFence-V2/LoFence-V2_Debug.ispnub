@@ -5,10 +5,10 @@ SPIVERIFY 0x30, 0x00, 0x02, 0x00, 0x16    ; check signature byte 0x02 (0x16 = AT
 SPIWRITE  0xAC, 0x80, 0x00, 0x00          ; chip erase
 WAIT 2                                    ; wait 20 ms
 ; flash given hex file starting at flash address 0 with pagesize 64
-FLASH C:\Users\alexander\Documents\LoFence-V2-Dev\LoFence-V2\Debug\LoFence-V2.hex, 0, 64
+FLASH C:\Users\alexander\Documents\LoFence_Firmware\LoFence-V2\Debug\LoFence-V2.hex, 0, 64
 WAIT 2                                    ; wait 20 ms
 ; flash given eep file starting at address 0 with pagesize 4
-EEPROM C:\Users\alexander\Documents\LoFence-V2-Dev\LoFence-V2\Debug\LoFence-V2.eep, 0, 4
+EEPROM C:\Users\alexander\Documents\LoFence_Firmware\LoFence-V2\Debug\LoFence-V2.eep, 0, 4
 DISCONNECT                                ; disconnect SPI
 DECCOUNTER 10                             ; allow 10 programming cycles
 END
