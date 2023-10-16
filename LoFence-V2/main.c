@@ -189,7 +189,7 @@ void measure()
 	LED_MSR_set_level(false);
 }
 
-void transmit()
+void transmit(const bool error_out)
 {
 	LED_TX_set_level(true);
 
@@ -200,56 +200,71 @@ void transmit()
 
 	snprintf(buffer_la, sizeof(buffer_la), "%04X%04X%04X", volt_bat, volt_fence_plus, volt_fence_minus);
 
-	if (LA66_transmitB(&fPort, false, buffer_la, &rxSize) == LA66_SUCCESS)
+	uint8_t ret = LA66_transmitB(&fPort, false, buffer_la, &rxSize);
+
+	switch (ret)
 	{
+	case LA66_SUCCESS:
 		log_serial("Downlink received...\r\n");
 
 		switch (buffer_la[0] & 0xFF)
 		{
-			case 0x01: // transmit duty cycle
+		case 0x01: // transmit duty cycle
+		{
+			if (rxSize == 4)
 			{
-				if (rxSize == 4)
-				{
-					eeprom_write_dword(&tdc, ((uint32_t)buffer_la[1] << 16 | buffer_la[2] << 8 | buffer_la[3]));
-				}
-				break;
+				eeprom_write_dword(&tdc, ((uint32_t)buffer_la[1] << 16 | buffer_la[2] << 8 | buffer_la[3]));
 			}
-			case 0x10: // measurement delay for each pole
-			{
-				if (rxSize == 3)
-				{
-					eeprom_write_word(&msr_ms, (buffer_la[1] << 8 | buffer_la[2]));
-				}
-				break;
-			}
-			case 0x11: // maximum fence voltage at ADC max, this depends on actual resistor values
-			{
-				if (rxSize == 3)
-				{
-					eeprom_write_word(&max3v3_volt, (buffer_la[1] << 8 | buffer_la[2]));
-				}
-				break;
-			}
-			case 0x12: // battery low voltage
-			{
-				if (rxSize == 3)
-				{
-					eeprom_write_word(&bat_low, (buffer_la[1] << 8 | buffer_la[2]));
-				}
-				break;
-			}
-			case 0x13: // battery low cycle count
-			{
-				if (rxSize == 2)
-				{
-					eeprom_write_byte(&bat_low_count_max, buffer_la[1]);
-				}
-				break;
-			}
+			break;
 		}
-	}
+		case 0x10: // measurement delay for each pole
+		{
+			if (rxSize == 3)
+			{
+				eeprom_write_word(&msr_ms, (buffer_la[1] << 8 | buffer_la[2]));
+			}
+			break;
+		}
+		case 0x11: // maximum fence voltage at ADC max, this depends on actual resistor values
+		{
+			if (rxSize == 3)
+			{
+				eeprom_write_word(&max3v3_volt, (buffer_la[1] << 8 | buffer_la[2]));
+			}
+			break;
+		}
+		case 0x12: // battery low voltage
+		{
+			if (rxSize == 3)
+			{
+				eeprom_write_word(&bat_low, (buffer_la[1] << 8 | buffer_la[2]));
+			}
+			break;
+		}
+		case 0x13: // battery low cycle count
+		{
+			if (rxSize == 2)
+			{
+				eeprom_write_byte(&bat_low_count_max, buffer_la[1]);
+			}
+			break;
+		}
+		}
+		LED_TX_set_level(false);
+		break;
+	
+	case LA66_NODOWN:
+		LED_TX_set_level(false);
+		break;
 
-	LED_TX_set_level(false);
+	default: // this is anything else which is an error or not expected
+		while (error_out)
+		{
+			LED_TX_toggle_level();
+			_delay_ms(100);
+		}
+		break;
+	}
 }
 
 void check_battery()
@@ -284,7 +299,7 @@ void deactivate()
 {
 	volt_bat = 0;
 
-	transmit();
+	transmit(false);
 
 	LED_IDLE_set_level(false);
 	LED_MSR_set_level(false);
@@ -366,7 +381,7 @@ int main(void)
 
 		measure();
 
-		transmit();
+		transmit(true);
 
 		check_battery();
 
