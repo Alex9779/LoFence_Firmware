@@ -399,7 +399,7 @@ uint8_t LA66_transmitB(uint8_t *fPort, const bool confirm, char *payload, uint8_
 					_delay_ms(100);
 					break;
 				}
-				else if (!confirm && (buffer, "rxTimeout") == 0)
+				else if (!confirm && strcmp(buffer, "rxTimeout") == 0)
 				{
 					if (stage == WAIT_FOR_RX)
 					{
