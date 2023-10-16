@@ -299,6 +299,7 @@ void deactivate()
 {
 	volt_bat = 0;
 
+	// send confirmed battery low uplink
 	transmit(true, false);
 
 	LED_IDLE_set_level(false);
@@ -381,6 +382,7 @@ int main(void)
 
 		measure();
 
+		// send unconfirmed uplink
 		transmit(false, true);
 
 		check_battery();
