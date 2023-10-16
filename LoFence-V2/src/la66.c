@@ -336,8 +336,18 @@ uint8_t LA66_transmitB(uint8_t *fPort, const bool confirm, char *payload, uint8_
 	
 	// receive
 	uint8_t stage = WAIT_FOR_OK;
+	uint32_t timeout;
+
+	if (confirm)
+	{
+		timeout = LA66_RX_CONF_TIMEOUT;
+	}
+	else
+	{
+		timeout = LA66_RX_TIMEOUT;
+	}
 	
-	for (uint32_t i = 0; i < LA66_RX_TIMEOUT * 100L; i++)
+	for (uint32_t i = 0; i < timeout * 100L; i++)
 	{
 		if (read_line(buffer) > 0)
 		{
@@ -389,7 +399,7 @@ uint8_t LA66_transmitB(uint8_t *fPort, const bool confirm, char *payload, uint8_
 					_delay_ms(100);
 					break;
 				}
-				else if (strcmp(buffer, "rxTimeout") == 0)
+				else if (!confirm && (buffer, "rxTimeout") == 0)
 				{
 					if (stage == WAIT_FOR_RX)
 					{
