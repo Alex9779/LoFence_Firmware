@@ -4,8 +4,19 @@ SPIVERIFY 0x30, 0x00, 0x01, 0x00, 0x95    ; check signature byte 0x01 (0x93 = 16
 SPIVERIFY 0x30, 0x00, 0x02, 0x00, 0x16    ; check signature byte 0x02 (0x16 = ATmega328PB device)
 SPIWRITE  0xAC, 0x80, 0x00, 0x00          ; chip erase
 WAIT 2                                    ; wait 20 ms
+SPIWRITE  0xAC, 0xA8, 0x00, 0xD1          ; write high fuse bits
+WAIT 1                                    ; wait 10 ms
+SPIVERIFY 0x58, 0x08, 0x00, 0x00, 0xD1    ; check high fuse bits
+WAIT 2                                    ; wait 20 ms
+SPIWRITE  0xAC, 0xA0, 0x00, 0xE2          ; write fuse bits
+WAIT 1                                    ; wait 10 ms
+SPIVERIFY 0x50, 0x00, 0x00, 0x00, 0xE2    ; check fuse bits
+WAIT 2                                    ; wait 20 ms
 ; flash given hex file starting at flash address 0 with pagesize 64
 FLASH C:\Users\alexander\Documents\LoFence_Firmware\LoFence-V2\Release\LoFence-V2.hex, 0, 64
+SPIWRITE  0xAC, 0xE0, 0x00, 0xFC          ; write lock bits
+WAIT 1                                    ; wait 10 ms
+SPIVERIFY 0x58, 0x00, 0x00, 0x00, 0xFC    ; check lock bits
 DISCONNECT                                ; disconnect SPI
 DECCOUNTER 10                             ; allow 10 programming cycles
 END
