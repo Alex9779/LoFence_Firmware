@@ -276,7 +276,7 @@ void check_battery()
 		bat_low_count++;
 	}
 	// if battery is lower than absolue minimum
-	else if (volt_bat <= 3100)
+	else if (volt_bat <= BATTERY_ABSOLUTE_MINIMUM)
 	{
 		// set deactivaion flag
 		do_deactivate = true;
