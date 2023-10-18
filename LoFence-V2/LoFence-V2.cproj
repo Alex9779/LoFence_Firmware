@@ -155,8 +155,8 @@
         </avrgcc.assembler.general.IncludePaths>
       </AvrGcc>
     </ToolchainSettings>
-    <PostBuildEvent>java -jar "C:\Program Files (x86)\ISPnubCreator\ISPnubCreator_v1.4.jar" $(SolutionDir)LoFence-V2\ISPnub\LoFence-V2_Release_full.ispnub LoFence-V2_Release_full.hex
-java -jar "C:\Program Files (x86)\ISPnubCreator\ISPnubCreator_v1.4.jar" $(SolutionDir)LoFence-V2\ISPnub\LoFence-V2_Release_update.ispnub LoFence-V2_Release_update.hex</PostBuildEvent>
+    <PostBuildEvent>java -jar "C:\Program Files (x86)\ISPnubCreator\ISPnubCreator_v1.4.jar" $(SolutionDir)LoFence-V2\ISPnub\LoFence-V2_Release_full.ispnub LoFence-V2_full.hex
+java -jar "C:\Program Files (x86)\ISPnubCreator\ISPnubCreator_v1.4.jar" $(SolutionDir)LoFence-V2\ISPnub\LoFence-V2_Release_update.ispnub LoFence-V2_update.hex</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <ToolchainSettings>
@@ -209,8 +209,8 @@ java -jar "C:\Program Files (x86)\ISPnubCreator\ISPnubCreator_v1.4.jar" $(Soluti
         <avrgcc.assembler.debugging.DebugLevel>Default (-Wa,-g)</avrgcc.assembler.debugging.DebugLevel>
       </AvrGcc>
     </ToolchainSettings>
-    <PostBuildEvent>java -jar "C:\Program Files (x86)\ISPnubCreator\ISPnubCreator_v1.4.jar" $(SolutionDir)LoFence-V2\ISPnub\LoFence-V2_Debug_full.ispnub LoFence-V2_Debug_full.hex
-java -jar "C:\Program Files (x86)\ISPnubCreator\ISPnubCreator_v1.4.jar" $(SolutionDir)LoFence-V2\ISPnub\LoFence-V2_Debug_update.ispnub LoFence-V2_Debug_update.hex</PostBuildEvent>
+    <PostBuildEvent>java -jar "C:\Program Files (x86)\ISPnubCreator\ISPnubCreator_v1.4.jar" $(SolutionDir)LoFence-V2\ISPnub\LoFence-V2_Debug_full.ispnub LoFence-V2_full.hex
+java -jar "C:\Program Files (x86)\ISPnubCreator\ISPnubCreator_v1.4.jar" $(SolutionDir)LoFence-V2\ISPnub\LoFence-V2_Debug_update.ispnub LoFence-V2_update.hex</PostBuildEvent>
   </PropertyGroup>
   <ItemGroup>
     <Folder Include="Config\" />
