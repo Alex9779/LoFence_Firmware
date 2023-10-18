@@ -11,7 +11,7 @@
 
 uint32_t EEMEM tdc = INTERVAL_SECONDS;
 uint16_t EEMEM msr_ms = MEASURE_MS;
-uint16_t EEMEM max3v3_volt = MAXIMUM_FENCE_VOLTAGE;
+uint16_t EEMEM max_volt = MAXIMUM_FENCE_VOLTAGE;
 uint16_t EEMEM bat_low = BATTERY_LOW_THRESHOLD;
 uint8_t EEMEM bat_low_count_max = BATTERY_LOW_MAX_CYCLES;
 
@@ -161,7 +161,7 @@ void measure()
 	_delay_100ms(eeprom_read_word(&msr_ms));
 	ADCSRA &= ~(1 << ADEN);
 
-	volt_fence_plus = (eeprom_read_word(&max3v3_volt) / 255 * adc_max);
+	volt_fence_plus = (eeprom_read_word(&max_volt) / 255 * adc_max);
 
 	snprintf(buffer_info, sizeof(buffer_info), "%d V\r\n", volt_fence_plus);
 	log_serial(buffer_info);
@@ -177,7 +177,7 @@ void measure()
 	_delay_100ms(eeprom_read_word(&msr_ms));
 	ADCSRA &= ~(1 << ADEN);
 
-	volt_fence_minus = (eeprom_read_word(&max3v3_volt) / 255 * adc_max);
+	volt_fence_minus = (eeprom_read_word(&max_volt) / 255 * adc_max);
 
 	snprintf(buffer_info, sizeof(buffer_info), "%d V\r\n", volt_fence_minus);
 	log_serial(buffer_info);
@@ -220,7 +220,7 @@ void handle_downlink(uint8_t ret, uint8_t rxSize, const bool output_error)
 				{
 					if (rxSize == 3)
 					{
-						eeprom_write_word(&max3v3_volt, (buffer_la[1] << 8 | buffer_la[2]));
+						eeprom_write_word(&max_volt, (buffer_la[1] << 8 | buffer_la[2]));
 					}
 					break;
 				}
@@ -299,7 +299,7 @@ void transmit_settings()
 	switch (settings)
 	{
 		case 1:
-		snprintf(buffer_la, sizeof(buffer_la), "%06lX%04X%04X",  eeprom_read_dword(&tdc), eeprom_read_word(&msr_ms), eeprom_read_word(&max3v3_volt));
+		snprintf(buffer_la, sizeof(buffer_la), "%06lX%04X%04X",  eeprom_read_dword(&tdc), eeprom_read_word(&msr_ms), eeprom_read_word(&max_volt));
 		break;
 		
 		case 2:
