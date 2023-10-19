@@ -299,11 +299,11 @@ void transmit_settings()
 	switch (settings)
 	{
 		case 1:
-		snprintf(buffer_la, sizeof(buffer_la), "%06lX%04X%04X",  eeprom_read_dword(&tdc), eeprom_read_word(&msr_ms), eeprom_read_word(&max_volt));
+		snprintf(buffer_la, sizeof(buffer_la), "%02X%06lX%04X%04X", VERSION, eeprom_read_dword(&tdc), eeprom_read_word(&msr_ms), eeprom_read_word(&max_volt));
 		break;
 		
 		case 2:
-		snprintf(buffer_la, sizeof(buffer_la), "%04X%02X", eeprom_read_word(&bat_low), eeprom_read_byte(&bat_low_count_max));
+		snprintf(buffer_la, sizeof(buffer_la), "%02X%04X%02X", VERSION, eeprom_read_word(&bat_low), eeprom_read_byte(&bat_low_count_max));
 		break;
 	}
 	
