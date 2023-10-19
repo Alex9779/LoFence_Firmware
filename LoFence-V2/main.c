@@ -11,7 +11,7 @@
 
 uint32_t EEMEM tdc = INTERVAL_SECONDS;
 uint16_t EEMEM msr_ms = MEASURE_MS;
-uint16_t EEMEM max3v3_volt = MAXIMUM_FENCE_VOLTAGE;
+uint16_t EEMEM max_volt = MAXIMUM_FENCE_VOLTAGE;
 uint16_t EEMEM bat_low = BATTERY_LOW_THRESHOLD;
 uint8_t EEMEM bat_low_count_max = BATTERY_LOW_MAX_CYCLES;
 
@@ -29,6 +29,8 @@ uint16_t volt_bat = 0;
 uint16_t volt_fence_plus = 0;
 uint16_t volt_fence_minus = 0;
 
+uint8_t settings = 0;
+
 uint8_t bat_low_count = 0;
 bool do_deactivate = false;
 
@@ -40,8 +42,7 @@ ISR(TIMER2_OVF_vect)
 	TCCR2B = TCCR2B;
 	seconds++;
 	LED_CLK_toggle_level();
-	while (ASSR & ((1 << TCN2UB) | (1 << OCR2AUB) | (1 << OCR2BUB) | (1 << TCR2AUB) | (1 << TCR2BUB)))
-		;
+	while (ASSR & ((1 << TCN2UB) | (1 << OCR2AUB) | (1 << OCR2BUB) | (1 << TCR2AUB) | (1 << TCR2BUB)));
 }
 
 ISR(ADC_vect)
@@ -160,7 +161,7 @@ void measure()
 	_delay_100ms(eeprom_read_word(&msr_ms));
 	ADCSRA &= ~(1 << ADEN);
 
-	volt_fence_plus = (eeprom_read_word(&max3v3_volt) / 255 * adc_max);
+	volt_fence_plus = (eeprom_read_word(&max_volt) / 255 * adc_max);
 
 	snprintf(buffer_info, sizeof(buffer_info), "%d V\r\n", volt_fence_plus);
 	log_serial(buffer_info);
@@ -176,7 +177,7 @@ void measure()
 	_delay_100ms(eeprom_read_word(&msr_ms));
 	ADCSRA &= ~(1 << ADEN);
 
-	volt_fence_minus = (eeprom_read_word(&max3v3_volt) / 255 * adc_max);
+	volt_fence_minus = (eeprom_read_word(&max_volt) / 255 * adc_max);
 
 	snprintf(buffer_info, sizeof(buffer_info), "%d V\r\n", volt_fence_minus);
 	log_serial(buffer_info);
@@ -189,67 +190,128 @@ void measure()
 	LED_MSR_set_level(false);
 }
 
-void transmit()
+void handle_downlink(uint8_t ret, uint8_t rxSize, const bool output_error)
+{
+	switch (ret)
+	{
+		case LA66_SUCCESS:
+		{
+			log_serial("Downlink received...\r\n");
+
+			switch (buffer_la[0] & 0xFF)
+			{	
+				case 0x01: // transmit duty cycle
+				{
+					if (rxSize == 4)
+					{
+						eeprom_write_dword(&tdc, ((uint32_t)buffer_la[1] << 16 | buffer_la[2] << 8 | buffer_la[3]));
+					}
+					break;
+				}
+				case 0x10: // measurement delay for each pole
+				{
+					if (rxSize == 3)
+					{
+						eeprom_write_word(&msr_ms, (buffer_la[1] << 8 | buffer_la[2]));
+					}
+					break;
+				}
+				case 0x11: // maximum fence voltage at ADC max, this depends on actual resistor values
+				{
+					if (rxSize == 3)
+					{
+						eeprom_write_word(&max_volt, (buffer_la[1] << 8 | buffer_la[2]));
+					}
+					break;
+				}
+				case 0x12: // battery low voltage
+				{
+					if (rxSize == 3)
+					{
+						eeprom_write_word(&bat_low, (buffer_la[1] << 8 | buffer_la[2]));
+					}
+					break;
+				}
+				case 0x13: // battery low cycle count
+				{
+					if (rxSize == 2)
+					{
+						eeprom_write_byte(&bat_low_count_max, buffer_la[1]);
+					}
+					break;
+				}
+				case 0xFF: // transmit settings next cycle
+				{
+					if (rxSize == 2)
+					{
+						settings = buffer_la[1];
+					}
+					break;
+				}
+			}
+			LED_TX_set_level(false);
+			break;
+		}
+		
+		case LA66_NODOWN:
+		{
+			LED_TX_set_level(false);
+			break;
+		}
+
+		default: // this is anything else which is an error or not expected
+		{
+			while (output_error)
+			{
+				LED_TX_toggle_level();
+				_delay_ms(100);
+			}
+			break;
+		}
+	}
+}
+
+void transmit_data(const bool confirm, const bool output_error)
 {
 	LED_TX_set_level(true);
 
 	uint8_t fPort = 1;
 	uint8_t rxSize = 0;
 
-	log_serial("Transmitting...\r\n");
+	log_serial("Transmitting data...\r\n");
 
 	snprintf(buffer_la, sizeof(buffer_la), "%04X%04X%04X", volt_bat, volt_fence_plus, volt_fence_minus);
 
-	if (LA66_transmitB(&fPort, false, buffer_la, &rxSize) == LA66_SUCCESS)
+	uint8_t ret = LA66_transmitB(&fPort, confirm, buffer_la, &rxSize);
+
+	handle_downlink(ret, rxSize, output_error);
+}
+
+void transmit_settings()
+{
+	LED_TX_set_level(true);
+	
+	uint8_t fPort = settings + 1;
+	uint8_t rxSize = 0;
+	
+	log_serial("Transmitting settings...\r\n");
+	
+	switch (settings)
 	{
-		log_serial("Downlink received...\r\n");
-
-		switch (buffer_la[0] & 0xFF)
-		{
-			case 0x01: // transmit duty cycle
-			{
-				if (rxSize == 4)
-				{
-					eeprom_write_dword(&tdc, ((uint32_t)buffer_la[1] << 16 | buffer_la[2] << 8 | buffer_la[3]));
-				}
-				break;
-			}
-			case 0x10: // measurement delay for each pole
-			{
-				if (rxSize == 3)
-				{
-					eeprom_write_word(&msr_ms, (buffer_la[1] << 8 | buffer_la[2]));
-				}
-				break;
-			}
-			case 0x11: // maximum fence voltage at ADC max, this depends on actual resistor values
-			{
-				if (rxSize == 3)
-				{
-					eeprom_write_word(&max3v3_volt, (buffer_la[1] << 8 | buffer_la[2]));
-				}
-				break;
-			}
-			case 0x12: // battery low voltage
-			{
-				if (rxSize == 3)
-				{
-					eeprom_write_word(&bat_low, (buffer_la[1] << 8 | buffer_la[2]));
-				}
-				break;
-			}
-			case 0x13: // battery low cycle count
-			{
-				if (rxSize == 2)
-				{
-					eeprom_write_byte(&bat_low_count_max, buffer_la[1]);
-				}
-				break;
-			}
-		}
+		case 1:
+		snprintf(buffer_la, sizeof(buffer_la), "%02X%06lX%04X%04X", VERSION, eeprom_read_dword(&tdc), eeprom_read_word(&msr_ms), eeprom_read_word(&max_volt));
+		break;
+		
+		case 2:
+		snprintf(buffer_la, sizeof(buffer_la), "%02X%04X%02X", VERSION, eeprom_read_word(&bat_low), eeprom_read_byte(&bat_low_count_max));
+		break;
 	}
+	
+	settings = 0;
+	
+	uint8_t ret = LA66_transmitB(&fPort, 0, buffer_la, &rxSize);
 
-	LED_TX_set_level(false);
+	handle_downlink(ret, rxSize, true);
 }
 
 void check_battery()
@@ -261,7 +323,7 @@ void check_battery()
 		bat_low_count++;
 	}
 	// if battery is lower than absolue minimum
-	else if (volt_bat <= 3100)
+	else if (volt_bat <= BATTERY_ABSOLUTE_MINIMUM)
 	{
 		// set deactivaion flag
 		do_deactivate = true;
@@ -284,7 +346,8 @@ void deactivate()
 {
 	volt_bat = 0;
 
-	transmit();
+	// try to transmit data confirmed
+	transmit_data(true, false);
 
 	LED_IDLE_set_level(false);
 	LED_MSR_set_level(false);
@@ -326,7 +389,7 @@ int main(void)
 	LED_TX_set_level(true);
 
 	log_serial("\r\n");
-	log_serial("LoFence-V2 v0.1 by Alex9779\r\n");
+	log_serial("LoFence-V2 v0.9 by Alex9779\r\n");
 	log_serial("https://github.com/alex9779/lofence-v2\r\n");
 	log_serial("\r\n");
 
@@ -364,9 +427,17 @@ int main(void)
 			deactivate();
 		}
 
-		measure();
-
-		transmit();
+		if (settings == 0)
+		{
+			measure();
+			
+			// transmit data unconfirmed
+			transmit_data(false, true);
+		}
+		else
+		{
+			transmit_settings();
+		}
 
 		check_battery();
 

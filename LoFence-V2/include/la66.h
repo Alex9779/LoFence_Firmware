@@ -25,6 +25,7 @@
 #define LA66_JOIN_TIMEOUT 10 * 60 // 10 minutes in seconds
 #define LA66_COMMAND_TIMEOUT 10 // 10 seconds
 #define LA66_RX_TIMEOUT 10 // 10 seconds
+#define LA66_RX_CONF_TIMEOUT 60 // 60 seconds
 #define AT_OK "OK"
 #define AT_ERROR "AT_ERROR"
 #define AT_PARAM_ERROR "AT_PARAM_ERROR"
