@@ -18,7 +18,7 @@
 #define MAXIMUM_FENCE_VOLTAGE 12000
 
 // battery low threshold voltage in mV
-#define BATTERY_LOW_THRESHOLD 3400
+#define BATTERY_LOW_THRESHOLD 3200
 
 // maximum amount of full measurement cycles
 // the battery can be low before deactivation
