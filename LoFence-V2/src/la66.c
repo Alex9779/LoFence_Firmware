@@ -124,7 +124,7 @@ static uint8_t read_line(char *line)
 
 // Sends a command to the LA66.
 // No response is read.
-static uint8_t send_command(const char *command)
+static LA66_ReturnCode send_command(const char *command)
 {
 	uint8_t end = strlen(command);
 
@@ -152,9 +152,9 @@ static uint8_t send_command(const char *command)
 
 // PUBLIC
 // Sends a query command to the LA66 and sets the response.
-uint8_t LA66_query_command(const char *command, char *response)
+LA66_ReturnCode LA66_query_command(const char *command, char *response)
 {
-	uint8_t ret = LA66_ERR_PANIC;
+	LA66_ReturnCode ret = LA66_ERR_PANIC;
 	char response2[LA66_MAX_BUFF];
 	
 	ret = send_command(command);
@@ -243,9 +243,9 @@ void LA66_deactivate()
 
 // The LA66 automatically tries to join a network when activated.
 // Wait for joined a network.
-uint8_t LA66_waitForJoin()
+LA66_ReturnCode LA66_waitForJoin()
 {
-	uint8_t ret = LA66_ERR_PANIC;
+	LA66_ReturnCode ret = LA66_ERR_PANIC;
 	char response[LA66_MAX_BUFF];
 	bool joined = false;
 	
@@ -322,9 +322,9 @@ uint16_t LA66_getRx2Dl()
 
 // Sends a confirmed/unconfirmed frame with an application payload.
 // Sets a recieved payload and its fPort and size.
-uint8_t LA66_transmitB(uint8_t *fPort, const bool confirm, char *payload, uint8_t *rxSize)
+LA66_ReturnCode LA66_transmitB(uint8_t *fPort, const bool confirm, char *payload, uint8_t *rxSize)
 {
-	uint8_t ret = LA66_ERR_PANIC;
+	LA66_ReturnCode ret = LA66_ERR_PANIC;
 	
 	// send command
 	// Command format: AT+SENDB=<confirm>,<fPort>,<data_len>,<data>, example AT+SENDB=0,2,8,05820802581ea0a5
@@ -335,7 +335,7 @@ uint8_t LA66_transmitB(uint8_t *fPort, const bool confirm, char *payload, uint8_
 	send_command(buffer);
 	
 	// receive
-	uint8_t stage = WAIT_FOR_OK;
+	LA66_ReceiveStage stage = WAIT_FOR_OK;
 	uint32_t timeout;
 
 	if (confirm)

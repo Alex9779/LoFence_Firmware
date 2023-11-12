@@ -87,7 +87,7 @@ to response
 
 @see LA66 LoRa Technology Module Command Reference User's Guide
 */
-uint8_t LA66_query_command(const char *command, char *response);
+LA66_ReturnCode LA66_query_command(const char *command, char *response);
 
 //LoRa
 //! Initialises all the LA66 MAC settings required to run LoRa commands (join, tx, etc).
@@ -100,9 +100,9 @@ config.h) to communicate over a LoRaWAN network.
 LA66
 @return LA66_ERR_PANIC If this happens something went really wrong when writing a command
 */
-uint8_t LA66_waitForJoin();
+LA66_ReturnCode LA66_waitForJoin();
 
-uint8_t LA66_getDr();
+LA66_ReturnCode LA66_getDr();
 uint16_t LA66_getRx1Dl();
 uint16_t LA66_getRx2Dl();
 
@@ -117,6 +117,6 @@ Transmits data over a LoRa network in either confirmed or unconfirmed mode.
 @return LA66_ERR_BUSY All channels are currently busy, try sending data less frequently
 @return LA66_ERR_JOIN You need to join a LoRaWAN network to TX data over one
 */
-uint8_t LA66_transmitB(uint8_t *fPort, const bool confirm, char *payload, uint8_t *rxSize);
+LA66_ReturnCode LA66_transmitB(uint8_t *fPort, const bool confirm, char *payload, uint8_t *rxSize);
 
 #endif /* LA66_H_ */
