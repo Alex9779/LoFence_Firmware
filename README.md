@@ -34,9 +34,13 @@ Use any AVR SPI suitable programmer (I use an [USBasp](https://www.fischl.de/usb
 
 Remember if you want to run updates and preserve the EEPROM when clearing the flash, to set the high fuse for that.
 
+#### Example AVRDUDE call using USBasp on Windows
+
+    avrdude.exe -c usbasp -p atmega328pb -B 125kHz -U hfuse:w:0xD1:m -U lfuse:w:0xE2:m -U flash:w:"LoFence-V2.hex":i -U eeprom:w:"LoFence-V2.eep":i -U lock:w:0xFC:m
+
 #### Example AVRDUDE call using USBasp on Windows with EEPROM preserving
 
-    avrdude.exe
+    avrdude.exe -c usbasp -p atmega328pb -B 125kHz -U hfuse:w:0xD1:m -U lfuse:w:0xE2:m -U flash:w:"LoFence-V2.hex":i -U lock:w:0xFC:m
 
 ### ISPnub
 
