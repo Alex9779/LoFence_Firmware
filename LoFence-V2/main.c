@@ -14,6 +14,7 @@ uint16_t EEMEM msr_ms = MEASURE_MS;
 uint16_t EEMEM max_volt = MAXIMUM_FENCE_VOLTAGE;
 uint16_t EEMEM bat_low = BATTERY_LOW_THRESHOLD;
 uint8_t EEMEM bat_low_count_max = BATTERY_LOW_MAX_CYCLES;
+uint16_t EEMEM bat_low_min = BATTERY_ABSOLUTE_MINIMUM;
 
 volatile uint32_t seconds = 0;
 
@@ -240,6 +241,14 @@ void handle_downlink(uint8_t ret, uint8_t rxSize, const bool output_error)
 					}
 					break;
 				}
+				case 0x14: // battery low minimum voltage
+				{
+					if (rxSize == 3)
+					{
+						eeprom_write_word(&bat_low_min, (buffer_la[1] << 8 | buffer_la[2]));
+					}
+					break;
+				}
 				case 0xFF: // transmit settings next cycle
 				{
 					if (rxSize == 2)
@@ -303,7 +312,7 @@ void transmit_settings()
 		break;
 		
 		case 2:
-		snprintf(buffer_la, sizeof(buffer_la), "%02X%04X%02X", VERSION, eeprom_read_word(&bat_low), eeprom_read_byte(&bat_low_count_max));
+		snprintf(buffer_la, sizeof(buffer_la), "%02X%04X%02X%04X", VERSION, eeprom_read_word(&bat_low), eeprom_read_byte(&bat_low_count_max), eeprom_read_word(&bat_low_min));
 		break;
 	}
 	
@@ -318,12 +327,12 @@ void check_battery()
 {
 	// if maximum cycles the battery has been low is not reached
 	// and if the battery is above the absolute minimum of 3100mV
-	if (bat_low_count < eeprom_read_byte(&bat_low_count_max) && volt_bat > BATTERY_ABSOLUTE_MINIMUM && volt_bat < eeprom_read_word(&bat_low))
+	if (bat_low_count < eeprom_read_byte(&bat_low_count_max) && volt_bat > bat_low_min && volt_bat < eeprom_read_word(&bat_low))
 	{
 		bat_low_count++;
 	}
 	// if battery is lower than absolue minimum
-	else if (volt_bat <= BATTERY_ABSOLUTE_MINIMUM)
+	else if (volt_bat <= bat_low_min)
 	{
 		// set deactivaion flag
 		do_deactivate = true;

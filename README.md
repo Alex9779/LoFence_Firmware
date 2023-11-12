@@ -72,6 +72,7 @@ The sent uplink includes:
 - *version*: an integer number for the firmware version on the device
 - *bat_low*: battery voltage in mV which triggers deactivation
 - *bat_low_count_max*: amount of subsequent duty cycles the battery has to be unter *bat_low* to trigger self-deactivation
+- *bat_low_min*: battery voltage in mV which triggers immediate deactivation
 
 #### Remark
 
@@ -93,6 +94,9 @@ Example: `0x120D48` --> 3400 millivolt (default value)
 
 `0x13` --> set *bat_low_count_max* (amount of subsequent duty cycles the battery has to be unter *bat_low* to trigger self-deactivation), value must be 1-byte hexadecimal value  
 Example: `0x1305` --> 5 cycles (default value)
+
+`0x14` --> set *bat_low_min* (battery voltage in mV which triggers deactivation), value must be 2-byte hexadecimal value  
+Example: `0x120C1C` --> 3100 millivolt (default value)
 
 #### Remarks
 
