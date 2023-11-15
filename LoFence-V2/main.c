@@ -296,7 +296,7 @@ void transmit_data(const bool confirm, const bool output_error)
 	handle_downlink(ret, rxSize, output_error);
 }
 
-void transmit_settings()
+void transmit_settings(const bool confirm, const bool output_error)
 {
 	LED_TX_set_level(true);
 	
@@ -318,9 +318,9 @@ void transmit_settings()
 	
 	settings = 0;
 	
-	uint8_t ret = LA66_transmitB(&fPort, 0, buffer_la, &rxSize);
+	uint8_t ret = LA66_transmitB(&fPort, confirm, buffer_la, &rxSize);
 
-	handle_downlink(ret, rxSize, true);
+	handle_downlink(ret, rxSize, output_error);
 }
 
 void check_battery()
@@ -445,7 +445,7 @@ int main(void)
 		}
 		else
 		{
-			transmit_settings();
+			transmit_settings(false, true);
 		}
 
 		check_battery();
