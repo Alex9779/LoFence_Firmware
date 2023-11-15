@@ -265,6 +265,11 @@ void handle_downlink(uint8_t *rxSize)
 			if (*rxSize == 2)
 			{
 				settings = buffer_la[1];
+				
+				if (settings > 2)
+				{	
+					settings = 0;
+				}
 			}
 			break;
 		}
