@@ -28,7 +28,8 @@
 // which triggers deactivation right away (next cycle)
 #define BATTERY_ABSOLUTE_MINIMUM 3100
 
-void log_serial(char *msg);
+void log_serial(const char *msg);
+void log_serial_P(const char *msg);
 
 int main(void);
 

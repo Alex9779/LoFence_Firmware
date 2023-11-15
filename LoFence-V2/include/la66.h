@@ -34,7 +34,8 @@
 
 typedef char LA66_buffer[LA66_MAX_BUFF];
 
-extern void log_serial(char *msg);
+extern void log_serial(const char *msg);
+extern void log_serial_P(const char *msg);
 
 //=========
 // GLOBALS
@@ -46,7 +47,7 @@ typedef enum LA66_ReturnCode {
 	LA66_ERROR,                   /**< Error */
 	LA66_ERR_PARAM,               /**< Error: invalid parameter passed to function or command */
 	LA66_ERR_BUSY,                /**< Error: tried to join/tx but all configured frequency channels were busy, wait and try again */
-	LA66_ERR_JOIN,                /**< Error: tried to tx data without being joined to a LoRaWAN network */	
+	LA66_ERR_JOIN,                /**< Error: tried to tx data without being joined to a LoRaWAN network */
 	LA66_ERR_PANIC,	              /**< Error: SOMETHING(???) went wrong. You found a bug! */
 	LA66_EOB = LA66_MAX_BUFF	  /**< Reached end of buffer passed to function */
 } LA66_ReturnCode;
@@ -87,7 +88,7 @@ to response
 
 @see LA66 LoRa Technology Module Command Reference User's Guide
 */
-LA66_ReturnCode LA66_query_command(const char *command, char *response);
+LA66_ReturnCode LA66_query_command_P(const char *command, char *response);
 
 //LoRa
 //! Initialises all the LA66 MAC settings required to run LoRa commands (join, tx, etc).

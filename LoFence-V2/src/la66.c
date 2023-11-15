@@ -114,7 +114,7 @@ static uint8_t read_line(char *line)
 	#ifdef DEBUG
 	if (i > 0)
 	{
-		snprintf(debug, sizeof(debug), "DBG line: %s\r\n", line);
+		snprintf_P(debug, sizeof(debug), PSTR("DBG line: %s\r\n"), line);
 		log_serial(debug);
 	}
 	#endif
@@ -135,7 +135,7 @@ static LA66_ReturnCode send_command(const char *command)
 	}
 	
 	#ifdef DEBUG
-	snprintf(debug, sizeof(debug), "DBG Sending command: %s", command);
+	snprintf_P(debug, sizeof(debug), PSTR("DBG Sending command: %s"), command);
 	log_serial(debug);
 	#endif
 	
@@ -152,12 +152,15 @@ static LA66_ReturnCode send_command(const char *command)
 
 // PUBLIC
 // Sends a query command to the LA66 and sets the response.
-LA66_ReturnCode LA66_query_command(const char *command, char *response)
+LA66_ReturnCode LA66_query_command_P(const char *command, char *response)
 {
 	LA66_ReturnCode ret = LA66_ERR_PANIC;
+	char rCommand[strlen_P(command)];
 	char response2[LA66_MAX_BUFF];
 	
-	ret = send_command(command);
+	strcpy_P(rCommand, command);
+	
+	ret = send_command(rCommand);
 	
 	if (ret == LA66_SUCCESS)
 	{
@@ -172,19 +175,19 @@ LA66_ReturnCode LA66_query_command(const char *command, char *response)
 			_delay_ms(10);
 		}
 		
-		if (strcmp(response, AT_ERROR) == 0)
+		if (strcmp_P(response, PSTR(AT_ERROR)) == 0)
 		{
 			return LA66_ERROR;
 		}
-		else if (strcmp(response, AT_PARAM_ERROR) == 0)
+		else if (strcmp_P(response, PSTR(AT_PARAM_ERROR)) == 0)
 		{
 			return LA66_ERR_PARAM;
 		}
-		else if (strcmp(response, AT_BUSY_ERROR) == 0)
+		else if (strcmp_P(response, PSTR(AT_BUSY_ERROR)) == 0)
 		{
 			return LA66_ERR_BUSY;
 		}
-		else if (strcmp(response, AT_NO_NET_JOINED) == 0)
+		else if (strcmp_P(response, PSTR(AT_NO_NET_JOINED)) == 0)
 		{
 			return LA66_ERR_JOIN;
 		}
@@ -196,7 +199,7 @@ LA66_ReturnCode LA66_query_command(const char *command, char *response)
 		{
 			while (read_line(response2) > 0)
 			{
-				if (strcmp(response2, AT_OK) == 0)
+				if (strcmp_P(response2, PSTR(AT_OK)) == 0)
 				{
 					ret = LA66_SUCCESS;
 					stop = true;
@@ -253,9 +256,9 @@ LA66_ReturnCode LA66_waitForJoin()
 	{
 		while (read_line(response) > 0)
 		{
-			if (strcmp(response, "JOINED") == 0)
+			if (strcmp_P(response, PSTR("JOINED")) == 0)
 			{
-				log_serial("Joined network!\r\n");
+				log_serial_P(PSTR("Joined network!\r\n"));
 				joined = true;
 				
 				break;
@@ -275,7 +278,7 @@ LA66_ReturnCode LA66_waitForJoin()
 	if (!joined)
 	{
 		ret = LA66_ERR_JOIN;
-		log_serial("Unable to join network, timeout reached!\r\n");
+		log_serial_P(PSTR("Unable to join network, timeout reached!\r\n"));
 	}
 	
 	return ret;
@@ -286,7 +289,7 @@ uint8_t LA66_getDr()
 {
 	LA66_buffer response;
 	
-	if (LA66_query_command("AT+DR=?\r\n", response) == LA66_SUCCESS)
+	if (LA66_query_command_P(PSTR("AT+DR=?\r\n"), response) == LA66_SUCCESS)
 	{
 		return response[0] - '0';
 	}
@@ -299,7 +302,7 @@ uint16_t LA66_getRx1Dl()
 {
 	LA66_buffer response;
 	
-	if (LA66_query_command("AT+RX1DL=?\r\n", response) == LA66_SUCCESS)
+	if (LA66_query_command_P(PSTR("AT+RX1DL=?\r\n"), response) == LA66_SUCCESS)
 	{
 		return atoi(response);
 	}
@@ -312,7 +315,7 @@ uint16_t LA66_getRx2Dl()
 {
 	LA66_buffer response;
 	
-	if (LA66_query_command("AT+RX2DL=?\r\n", response) == LA66_SUCCESS)
+	if (LA66_query_command_P(PSTR("AT+RX2DL=?\r\n"), response) == LA66_SUCCESS)
 	{
 		return atoi(response);
 	}
@@ -330,13 +333,13 @@ LA66_ReturnCode LA66_transmitB(uint8_t *fPort, const bool confirm, char *payload
 	// Command format: AT+SENDB=<confirm>,<fPort>,<data_len>,<data>, example AT+SENDB=0,2,8,05820802581ea0a5
 	char buffer[32 + LA66_MAX_BUFF];
 	
-	snprintf(buffer, sizeof(buffer), "AT+SENDB=0%d,%u,%u,%s\r\n", confirm, *fPort, strlen(payload) / 2, payload);
-		
+	snprintf_P(buffer, sizeof(buffer), PSTR("AT+SENDB=0%d,%u,%u,%s\r\n"), confirm, *fPort, strlen(payload) / 2, payload);
+	
 	ret = send_command(buffer);
 	
 	// check if command was successful
 	if (ret == LA66_SUCCESS)
-	{	
+	{
 		// receive
 		LA66_ReceiveStage stage = WAIT_FOR_OK;
 		uint32_t timeout;
@@ -356,22 +359,22 @@ LA66_ReturnCode LA66_transmitB(uint8_t *fPort, const bool confirm, char *payload
 			{
 				if (stage == WAIT_FOR_OK)
 				{
-					if (strcmp(buffer, AT_ERROR) == 0)
+					if (strcmp_P(buffer, PSTR(AT_ERROR)) == 0)
 					{
 						ret = LA66_ERROR;
 						break;
 					}
-					else if (strcmp(buffer, AT_PARAM_ERROR) == 0)
+					else if (strcmp_P(buffer, PSTR(AT_PARAM_ERROR)) == 0)
 					{
 						ret = LA66_ERR_PARAM;
 						break;
 					}
-					else if (strcmp(buffer, AT_BUSY_ERROR) == 0)
+					else if (strcmp_P(buffer, PSTR(AT_BUSY_ERROR)) == 0)
 					{
 						ret = LA66_ERR_BUSY;
 						break;
 					}
-					else if (strcmp(buffer, AT_NO_NET_JOINED) == 0)
+					else if (strcmp_P(buffer, PSTR(AT_NO_NET_JOINED)) == 0)
 					{
 						ret = LA66_ERR_JOIN;
 						break;
@@ -386,7 +389,7 @@ LA66_ReturnCode LA66_transmitB(uint8_t *fPort, const bool confirm, char *payload
 				}
 				else if (stage == WAIT_FOR_TX)
 				{
-					if (strcmp(buffer, "txDone") == 0)
+					if (strcmp_P(buffer, PSTR("txDone")) == 0)
 					{
 						stage = WAIT_FOR_RX;
 						
@@ -395,14 +398,14 @@ LA66_ReturnCode LA66_transmitB(uint8_t *fPort, const bool confirm, char *payload
 				}
 				else if (stage == WAIT_FOR_RX || stage == WAIT_FOR_RX2)
 				{
-					if (strcmp(buffer, "rxDone") == 0)
+					if (strcmp_P(buffer, PSTR("rxDone")) == 0)
 					{
 						ret = LA66_SUCCESS;
 						
 						_delay_ms(100);
 						break;
 					}
-					else if (!confirm && strcmp(buffer, "rxTimeout") == 0)
+					else if (!confirm && strcmp_P(buffer, PSTR("rxTimeout")) == 0)
 					{
 						if (stage == WAIT_FOR_RX)
 						{
@@ -425,12 +428,12 @@ LA66_ReturnCode LA66_transmitB(uint8_t *fPort, const bool confirm, char *payload
 		// check if return code indicates received downlink
 		if (ret == LA66_SUCCESS)
 		{
-			ret = LA66_query_command("AT+RECVB=?\r\n", buffer);
+			ret = LA66_query_command_P(PSTR("AT+RECVB=?\r\n"), buffer);
 			
 			char *tmp = buffer;
 			
-			*fPort = atoi(strsep(&tmp, ":"));
-			char *_payload = strsep(&tmp, ":");
+			*fPort = atoi(strsep_P(&tmp, PSTR(":")));
+			char *_payload = strsep_P(&tmp, PSTR(":"));
 			*rxSize = strlen(_payload) / 2;
 			
 			memset(payload, 0, LA66_MAX_BUFF);

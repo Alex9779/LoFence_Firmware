@@ -73,7 +73,7 @@ void power_save(uint32_t sec)
 	sleep_disable();
 }
 
-void log_serial(char *msg)
+void log_serial(const char *msg)
 {
 	for (uint8_t i = 0; i < strlen(msg); i++)
 	{
@@ -81,6 +81,20 @@ void log_serial(char *msg)
 		{
 		}
 		USART_1_write(msg[i]);
+	}
+	while (USART_1_is_tx_busy())
+	{
+	}
+}
+
+void log_serial_P(const char *msg)
+{
+	for (uint8_t i = 0; i < strlen_P(msg); i++)
+	{
+		while (!USART_1_is_tx_ready())
+		{
+		}
+		USART_1_write(pgm_read_byte(&(msg[i])));
 	}
 	while (USART_1_is_tx_busy())
 	{
@@ -123,7 +137,7 @@ void measure()
 {
 	LED_MSR_set_level(true);
 
-	log_serial("Measuring...\r\n");
+	log_serial_P(PSTR("Measuring...\r\n"));
 
 	// ----------------------------------------------------------------------------------------------
 
@@ -133,7 +147,7 @@ void measure()
 
 	// ----------------------------------------------------------------------------------------------
 
-	log_serial("Measuring battery: ");
+	log_serial_P(PSTR("Measuring battery: "));
 
 	BAT_GND_set_level(false);
 	_delay_ms(1000);
@@ -149,12 +163,12 @@ void measure()
 	volt_bat = (((330000 / 255 * adc_min * 2) - 0)) / 100 + 125;
 	// 125mV is the measured voltage dfrop of the Schottky diode
 
-	snprintf(buffer_info, sizeof(buffer_info), "%d mV\r\n", volt_bat);
+	snprintf_P(buffer_info, sizeof(buffer_info), PSTR("%d mV\r\n"), volt_bat);
 	log_serial(buffer_info);
 
 	// ----------------------------------------------------------------------------------------------
 
-	log_serial("Measuring fence positive: ");
+	log_serial_P(PSTR("Measuring fence positive: "));
 
 	ADMUX = (ADMUX & 0xE0) | (1 << MUX1); // Pin 2
 	ADCSRA |= (1 << ADEN);
@@ -164,13 +178,13 @@ void measure()
 	ADCSRA &= ~(1 << ADEN);
 
 	volt_fence_plus = (eeprom_read_word(&max_volt) / 255 * adc_max);
-
-	snprintf(buffer_info, sizeof(buffer_info), "%d V\r\n", volt_fence_plus);
+	
+	snprintf_P(buffer_info, sizeof(buffer_info), PSTR("%d V\r\n"), volt_fence_plus);
 	log_serial(buffer_info);
 
 	// ----------------------------------------------------------------------------------------------
 
-	log_serial("Measuring fence negative: ");
+	log_serial_P(PSTR("Measuring fence negative: "));
 
 	ADMUX = (ADMUX & 0xE0); // Pin 0
 	ADCSRA |= (1 << ADEN);
@@ -181,7 +195,7 @@ void measure()
 
 	volt_fence_minus = (eeprom_read_word(&max_volt) / 255 * adc_max);
 
-	snprintf(buffer_info, sizeof(buffer_info), "%d V\r\n", volt_fence_minus);
+	snprintf_P(buffer_info, sizeof(buffer_info), PSTR("%d V\r\n"), volt_fence_minus);
 	log_serial(buffer_info);
 
 	// ----------------------------------------------------------------------------------------------
@@ -194,7 +208,7 @@ void measure()
 
 void handle_downlink(uint8_t *rxSize)
 {
-	log_serial("Downlink received...\r\n");
+	log_serial_P(PSTR("Downlink received...\r\n"));
 
 	switch (buffer_la[0] & 0xFF)
 	{
@@ -273,8 +287,8 @@ void handle_error(LA66_ReturnCode ret)
 		case LA66_ERR_JOIN:
 		case LA66_ERR_BUSY:
 		case LA66_EOB:
-		{			
-			last_error = ret;						
+		{
+			last_error = ret;
 			break;
 		}
 	}
@@ -287,9 +301,9 @@ void transmit_data(const bool confirm)
 	uint8_t fPort = 1;
 	uint8_t rxSize = 0;
 
-	log_serial("Transmitting data...\r\n");
+	log_serial_P(PSTR("Transmitting data...\r\n"));
 
-	snprintf(buffer_la, sizeof(buffer_la), "%04X%04X%04X", volt_bat, volt_fence_plus, volt_fence_minus);
+	snprintf_P(buffer_la, sizeof(buffer_la), PSTR("%04X%04X%04X"), volt_bat, volt_fence_plus, volt_fence_minus);
 
 	LA66_ReturnCode ret = LA66_transmitB(&fPort, confirm, buffer_la, &rxSize);
 	
@@ -323,16 +337,16 @@ void transmit_settings(const bool confirm)
 	uint8_t fPort = settings + 1;
 	uint8_t rxSize = 0;
 	
-	log_serial("Transmitting settings...\r\n");
+	log_serial_P(PSTR("Transmitting settings...\r\n"));
 	
 	switch (settings)
 	{
 		case 1:
-		snprintf(buffer_la, sizeof(buffer_la), "%02X%06lX%04X%04X", VERSION, eeprom_read_dword(&tdc), eeprom_read_word(&msr_ms), eeprom_read_word(&max_volt));
+		snprintf_P(buffer_la, sizeof(buffer_la), PSTR("%02X%06lX%04X%04X"), VERSION, eeprom_read_dword(&tdc), eeprom_read_word(&msr_ms), eeprom_read_word(&max_volt));
 		break;
 		
 		case 2:
-		snprintf(buffer_la, sizeof(buffer_la), "%02X%04X%02X%04X", VERSION, eeprom_read_word(&bat_low), eeprom_read_byte(&bat_low_count_max), eeprom_read_word(&bat_low_min));
+		snprintf_P(buffer_la, sizeof(buffer_la), PSTR("%02X%04X%02X%04X"), VERSION, eeprom_read_word(&bat_low), eeprom_read_byte(&bat_low_count_max), eeprom_read_word(&bat_low_min));
 		break;
 	}
 	
@@ -370,10 +384,10 @@ void transmit_error(const bool confirm)
 	uint8_t fPort = 254;
 	uint8_t rxSize = 0;
 	
-	log_serial("Transmitting error...\r\n");
+	log_serial_P(PSTR("Transmitting error...\r\n"));
 	
-	snprintf(buffer_la, sizeof(buffer_la), "%02X", last_error);
-		
+	snprintf_P(buffer_la, sizeof(buffer_la), PSTR("%02X"), last_error);
+	
 	LA66_ReturnCode ret = LA66_transmitB(&fPort, confirm, buffer_la, &rxSize);
 
 	switch (ret)
@@ -448,7 +462,7 @@ void pause()
 {
 	LED_IDLE_set_level(true);
 
-	snprintf(buffer_info, sizeof(buffer_info), "Sleeping for %lu seconds...\r\n", eeprom_read_dword(&tdc));
+	snprintf_P(buffer_info, sizeof(buffer_info), PSTR("Sleeping for %lu seconds...\r\n"), eeprom_read_dword(&tdc));
 	log_serial(buffer_info);
 	_delay_ms(500);
 
@@ -468,10 +482,10 @@ int main(void)
 	LED_MSR_set_level(true);
 	LED_TX_set_level(true);
 
-	log_serial("\r\n");
-	log_serial("LoFence-V2 v0.9 by Alex9779\r\n");
-	log_serial("https://github.com/alex9779/lofence-v2\r\n");
-	log_serial("\r\n");
+	log_serial_P(PSTR("\r\n"));
+	log_serial_P(PSTR("LoFence-V2 v0.9 by Alex9779\r\n"));
+	log_serial_P(PSTR("https://github.com/alex9779/lofence-v2\r\n"));
+	log_serial_P(PSTR("\r\n"));
 
 	_delay_ms(1000);
 
@@ -479,14 +493,14 @@ int main(void)
 
 	LED_IDLE_set_level(false);
 
-	log_serial("Initializing ADC...\r\n");
+	log_serial_P(PSTR("Initializing ADC...\r\n"));
 	adc_init();
 	LED_MSR_set_level(false);
 
-	log_serial("Activating LA66 module...\r\n");
+	log_serial_P(PSTR("Activating LA66 module...\r\n"));
 	LA66_reset();
 
-	log_serial("Waiting to join network...\r\n");
+	log_serial_P(PSTR("Waiting to join network...\r\n"));
 	if (LA66_waitForJoin() == LA66_ERR_PANIC)
 	{
 		LA66_deactivate();
@@ -516,10 +530,10 @@ int main(void)
 		{
 			LED_TX_set_level(true);
 			
-			log_serial("Resetting LA66 module...\r\n");
+			log_serial_P(PSTR("Resetting LA66 module...\r\n"));
 			LA66_reset();
 
-			log_serial("Waiting to join network...\r\n");
+			log_serial_P(PSTR("Waiting to join network...\r\n"));
 			if (LA66_waitForJoin() == LA66_ERR_PANIC)
 			{
 				LA66_deactivate();
