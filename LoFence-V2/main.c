@@ -353,11 +353,6 @@ void check_battery()
 
 void deactivate()
 {
-	volt_bat = 0;
-
-	// try to transmit data confirmed
-	transmit_data(true, false);
-
 	LED_IDLE_set_level(false);
 	LED_MSR_set_level(false);
 	LED_TX_set_level(false);
@@ -433,6 +428,11 @@ int main(void)
 		// check for pending deactivation
 		if (do_deactivate)
 		{
+			volt_bat = 0;
+
+			// try to transmit data confirmed
+			transmit_data(true, false);
+			
 			deactivate();
 		}
 
