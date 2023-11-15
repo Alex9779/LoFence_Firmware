@@ -548,6 +548,8 @@ int main(void)
 			LED_TX_set_level(false);
 			
 			transmit_error(true);
+			
+			last_error = 0;
 		}
 		else if (settings == 0)
 		{
