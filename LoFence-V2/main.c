@@ -25,6 +25,7 @@ uint8_t adc_val = 0;
 
 char buffer_info[LA66_MAX_BUFF];
 LA66_buffer buffer_la;
+LA66_ReturnCode last_error = 0;
 
 uint16_t volt_bat = 0;
 uint16_t volt_fence_plus = 0;
@@ -191,96 +192,95 @@ void measure()
 	LED_MSR_set_level(false);
 }
 
-void handle_downlink(uint8_t ret, uint8_t rxSize, const bool output_error)
+void handle_downlink(uint8_t *rxSize)
 {
-	switch (ret)
+	log_serial("Downlink received...\r\n");
+
+	switch (buffer_la[0] & 0xFF)
 	{
-		case LA66_SUCCESS:
+		case 0x01: // transmit duty cycle
 		{
-			log_serial("Downlink received...\r\n");
-
-			switch (buffer_la[0] & 0xFF)
+			if (*rxSize == 4)
 			{
-				case 0x01: // transmit duty cycle
-				{
-					if (rxSize == 4)
-					{
-						eeprom_write_dword(&tdc, ((uint32_t)buffer_la[1] << 16 | buffer_la[2] << 8 | buffer_la[3]));
-					}
-					break;
-				}
-				case 0x10: // measurement delay for each pole
-				{
-					if (rxSize == 3)
-					{
-						eeprom_write_word(&msr_ms, (buffer_la[1] << 8 | buffer_la[2]));
-					}
-					break;
-				}
-				case 0x11: // maximum fence voltage at ADC max, this depends on actual resistor values
-				{
-					if (rxSize == 3)
-					{
-						eeprom_write_word(&max_volt, (buffer_la[1] << 8 | buffer_la[2]));
-					}
-					break;
-				}
-				case 0x12: // battery low voltage
-				{
-					if (rxSize == 3)
-					{
-						eeprom_write_word(&bat_low, (buffer_la[1] << 8 | buffer_la[2]));
-					}
-					break;
-				}
-				case 0x13: // battery low cycle count
-				{
-					if (rxSize == 2)
-					{
-						eeprom_write_byte(&bat_low_count_max, buffer_la[1]);
-					}
-					break;
-				}
-				case 0x14: // battery low minimum voltage
-				{
-					if (rxSize == 3)
-					{
-						eeprom_write_word(&bat_low_min, (buffer_la[1] << 8 | buffer_la[2]));
-					}
-					break;
-				}
-				case 0xFF: // transmit settings next cycle
-				{
-					if (rxSize == 2)
-					{
-						settings = buffer_la[1];
-					}
-					break;
-				}
+				eeprom_write_dword(&tdc, ((uint32_t)buffer_la[1] << 16 | buffer_la[2] << 8 | buffer_la[3]));
 			}
-			LED_TX_set_level(false);
 			break;
 		}
-		
-		case LA66_NODOWN:
+		case 0x10: // measurement delay for each pole
 		{
-			LED_TX_set_level(false);
-			break;
-		}
-
-		default: // this is anything else which is an error or not expected
-		{
-			while (output_error)
+			if (*rxSize == 3)
 			{
-				LED_TX_toggle_level();
-				_delay_ms(100);
+				eeprom_write_word(&msr_ms, (buffer_la[1] << 8 | buffer_la[2]));
+			}
+			break;
+		}
+		case 0x11: // maximum fence voltage at ADC max, this depends on actual resistor values
+		{
+			if (*rxSize == 3)
+			{
+				eeprom_write_word(&max_volt, (buffer_la[1] << 8 | buffer_la[2]));
+			}
+			break;
+		}
+		case 0x12: // battery low voltage
+		{
+			if (*rxSize == 3)
+			{
+				eeprom_write_word(&bat_low, (buffer_la[1] << 8 | buffer_la[2]));
+			}
+			break;
+		}
+		case 0x13: // battery low cycle count
+		{
+			if (*rxSize == 2)
+			{
+				eeprom_write_byte(&bat_low_count_max, buffer_la[1]);
+			}
+			break;
+		}
+		case 0x14: // battery low minimum voltage
+		{
+			if (*rxSize == 3)
+			{
+				eeprom_write_word(&bat_low_min, (buffer_la[1] << 8 | buffer_la[2]));
+			}
+			break;
+		}
+		case 0xFF: // transmit settings next cycle
+		{
+			if (*rxSize == 2)
+			{
+				settings = buffer_la[1];
 			}
 			break;
 		}
 	}
 }
 
-void transmit_data(const bool confirm, const bool output_error)
+void handle_error(LA66_ReturnCode ret)
+{
+	switch (ret)
+	{
+		case LA66_SUCCESS:
+		case LA66_NODOWN:
+		{
+			break;
+		}
+		
+		case LA66_ERR_PANIC:
+		case LA66_ERROR:
+		case LA66_ERR_PARAM:
+		case LA66_ERR_JOIN:
+		case LA66_ERR_BUSY:
+		case LA66_EOB:
+		{			
+			last_error = ret;						
+			break;
+		}
+	}
+}
+
+void transmit_data(const bool confirm)
 {
 	LED_TX_set_level(true);
 
@@ -291,12 +291,32 @@ void transmit_data(const bool confirm, const bool output_error)
 
 	snprintf(buffer_la, sizeof(buffer_la), "%04X%04X%04X", volt_bat, volt_fence_plus, volt_fence_minus);
 
-	uint8_t ret = LA66_transmitB(&fPort, confirm, buffer_la, &rxSize);
-
-	handle_downlink(ret, rxSize, output_error);
+	LA66_ReturnCode ret = LA66_transmitB(&fPort, confirm, buffer_la, &rxSize);
+	
+	switch (ret)
+	{
+		case LA66_SUCCESS:
+		{
+			handle_downlink(&rxSize);
+			LED_TX_set_level(false);
+			break;
+		}
+		
+		case LA66_NODOWN:
+		{
+			LED_TX_set_level(false);
+			break;
+		}
+		
+		default:
+		{
+			handle_error(ret);
+			break;
+		}
+	}
 }
 
-void transmit_settings(const bool confirm, const bool output_error)
+void transmit_settings(const bool confirm)
 {
 	LED_TX_set_level(true);
 	
@@ -318,9 +338,65 @@ void transmit_settings(const bool confirm, const bool output_error)
 	
 	settings = 0;
 	
-	uint8_t ret = LA66_transmitB(&fPort, confirm, buffer_la, &rxSize);
+	LA66_ReturnCode ret = LA66_transmitB(&fPort, confirm, buffer_la, &rxSize);
 
-	handle_downlink(ret, rxSize, output_error);
+	switch (ret)
+	{
+		case LA66_SUCCESS:
+		{
+			handle_downlink(&rxSize);
+			LED_TX_set_level(false);
+			break;
+		}
+		
+		case LA66_NODOWN:
+		{
+			LED_TX_set_level(false);
+			break;
+		}
+		
+		default:
+		{
+			handle_error(ret);
+			break;
+		}
+	}
+}
+
+void transmit_error(const bool confirm)
+{
+	LED_TX_set_level(true);
+	
+	uint8_t fPort = 254;
+	uint8_t rxSize = 0;
+	
+	log_serial("Transmitting error...\r\n");
+	
+	snprintf(buffer_la, sizeof(buffer_la), "%02X", last_error);
+		
+	LA66_ReturnCode ret = LA66_transmitB(&fPort, confirm, buffer_la, &rxSize);
+
+	switch (ret)
+	{
+		case LA66_SUCCESS:
+		{
+			handle_downlink(&rxSize);
+			LED_TX_set_level(false);
+			break;
+		}
+		
+		case LA66_NODOWN:
+		{
+			LED_TX_set_level(false);
+			break;
+		}
+		
+		default:
+		{
+			handle_error(ret);
+			break;
+		}
+	}
 }
 
 void check_battery()
@@ -431,21 +507,43 @@ int main(void)
 			volt_bat = 0;
 
 			// try to transmit data confirmed
-			transmit_data(true, false);
+			transmit_data(true);
 			
 			deactivate();
 		}
+		
+		if (last_error != 0)
+		{
+			LED_TX_set_level(true);
+			
+			log_serial("Resetting LA66 module...\r\n");
+			LA66_reset();
 
-		if (settings == 0)
+			log_serial("Waiting to join network...\r\n");
+			if (LA66_waitForJoin() == LA66_ERR_PANIC)
+			{
+				LA66_deactivate();
+
+				while (1)
+				{
+					LED_TX_toggle_level();
+					_delay_ms(100);
+				}
+			}
+			
+			LED_TX_set_level(false);
+			
+			transmit_error(true);
+		}
+		else if (settings == 0)
 		{
 			measure();
 			
-			// transmit data unconfirmed
-			transmit_data(false, true);
+			transmit_data(false);
 		}
 		else
 		{
-			transmit_settings(false, true);
+			transmit_settings(false);
 		}
 
 		check_battery();
