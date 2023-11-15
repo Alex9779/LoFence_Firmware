@@ -200,7 +200,7 @@ void handle_downlink(uint8_t ret, uint8_t rxSize, const bool output_error)
 			log_serial("Downlink received...\r\n");
 
 			switch (buffer_la[0] & 0xFF)
-			{	
+			{
 				case 0x01: // transmit duty cycle
 				{
 					if (rxSize == 4)
