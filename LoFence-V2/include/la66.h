@@ -40,7 +40,7 @@ extern void log_serial(char *msg);
 // GLOBALS
 //=========
 //! Values returned by LA66_* functions
-enum LA66_ReturnCode {
+typedef enum LA66_ReturnCode {
 	LA66_SUCCESS,                 /**< Success */
 	LA66_NODOWN,                  /**< tx succeeded and no downlink was received */
 	LA66_ERROR,                   /**< Error */
@@ -49,14 +49,14 @@ enum LA66_ReturnCode {
 	LA66_ERR_JOIN,                /**< Error: tried to tx data without being joined to a LoRaWAN network */	
 	LA66_ERR_PANIC,	              /**< Error: SOMETHING(???) went wrong. You found a bug! */
 	LA66_EOB = LA66_MAX_BUFF	  /**< Reached end of buffer passed to function */
-};
+} LA66_ReturnCode;
 
-enum LA66_ReceiveStage {
+typedef enum LA66_ReceiveStage {
 	WAIT_FOR_OK,
 	WAIT_FOR_TX,
 	WAIT_FOR_RX,
 	WAIT_FOR_RX2
-};
+} LA66_ReceiveStage;
 
 //===========
 // FUNCTIONS
