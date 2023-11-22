@@ -32,8 +32,10 @@ uint16_t volt_fence_plus = 0;
 uint16_t volt_fence_minus = 0;
 
 uint8_t settings = 0;
+uint16_t settings_interval[] = { 0, 0 };
 
 uint8_t bat_low_count = 0;
+uint8_t bisect_pause_count = 0;
 bool do_deactivate = false;
 
 // ----------------------------------------------------------------------------------------------
@@ -217,6 +219,10 @@ void handle_downlink(uint8_t *rxSize)
 			if (*rxSize == 4)
 			{
 				eeprom_write_dword(&tdc, ((uint32_t)buffer_la[1] << 16 | buffer_la[2] << 8 | buffer_la[3]));
+				
+				// reset intervals for recurring settings uplinks
+				settings_interval[0] = 0;
+				settings_interval[1] = 0;
 			}
 			break;
 		}
@@ -266,10 +272,23 @@ void handle_downlink(uint8_t *rxSize)
 			{
 				settings = buffer_la[1];
 				
-				if (settings > 2)
-				{	
+				if (settings > 0 && settings <= 2)
+				{
+					// reset interval for recurring settings uplink
+					settings_interval[settings -1] = 0;
+					
+					if (eeprom_read_dword(&tdc) >= 60)
+					{
+						// see calc_recurring_settings() comment for this euqal assignement
+						bisect_pause_count = 3;
+					}
+				}
+				// discard out of range commands
+				else if (settings > 2)
+				{
 					settings = 0;
 				}
+				
 			}
 			break;
 		}
@@ -418,6 +437,43 @@ void transmit_error(const bool confirm)
 	}
 }
 
+void calc_recurring_settings()
+{
+	settings_interval[0]++;
+	settings_interval[1]++;
+
+	// settings_interval[0] is 1/3 of daily max uplink count
+	if (settings_interval[0] == (uint16_t)24 * 60 * 60 / (eeprom_read_dword(&tdc) + 2 * eeprom_read_word(&msr_ms) / 1000) * 1 / 3)
+	{
+		settings = 1;
+	}
+	// settings_interval[0] is daily max uplink count
+	else if (settings_interval[0] == (uint16_t)24 * 60 * 60 / (eeprom_read_dword(&tdc) + 2 * eeprom_read_word(&msr_ms) / 1000))
+	{
+		settings_interval[0] = 0;
+	}
+
+	// settings_interval[1] is 2/3 of daily max uplink count
+	if (settings_interval[1] == (uint16_t)24 * 60 * 60 / (eeprom_read_dword(&tdc) + 2 * eeprom_read_word(&msr_ms) / 1000) * 2 / 3)
+	{
+		settings = 2;
+	}
+	// settings_interval[1] is 1/3 of daily max uplink count
+	else if (settings_interval[1] == (uint16_t)24 * 60 * 60 / (eeprom_read_dword(&tdc) + 2 * eeprom_read_word(&msr_ms) / 1000))
+	{
+		settings_interval[1] = 0;
+	}
+	
+	// if settings are schedule for next cycle and TDC is greater than 1 minute bisect pause for 3 cycles
+	// in current cycle, which will send normal data, when calling pause count will be reduced to 2
+	// next cycle after TDC/2 will send settings, count will be reduced to 1
+	// next cycle after TDC/2 will send normal data, count will be 0 and the following cycle will occur after normal TDC
+	if (eeprom_read_dword(&tdc) >= 60 && settings > 0)
+	{
+		bisect_pause_count = 3;
+	}
+}
+
 void check_battery()
 {
 	// if maximum cycles the battery has been low is not reached
@@ -466,12 +522,14 @@ void deactivate()
 void pause()
 {
 	LED_IDLE_set_level(true);
+	
+	if (bisect_pause_count > 0) bisect_pause_count--;
 
-	snprintf_P(buffer_info, sizeof(buffer_info), PSTR("Sleeping for %lu seconds...\r\n"), eeprom_read_dword(&tdc));
+	snprintf_P(buffer_info, sizeof(buffer_info), PSTR("Sleeping for %lu seconds...\r\n"), eeprom_read_dword(&tdc) / (bisect_pause_count > 0 ? 2 : 1));
 	log_serial(buffer_info);
 	_delay_ms(500);
-
-	power_save(eeprom_read_dword(&tdc) + (rand() % (RANDOMNESS * 2) - RANDOMNESS));
+	
+	power_save((eeprom_read_dword(&tdc) + (rand() % (RANDOMNESS * 2) - RANDOMNESS)) / (bisect_pause_count > 0 ? 2 : 1));
 
 	LED_IDLE_set_level(false);
 }
@@ -531,6 +589,7 @@ int main(void)
 			deactivate();
 		}
 		
+		// if previous cycle threw an error
 		if (last_error != 0)
 		{
 			LED_TX_set_level(true);
@@ -556,19 +615,23 @@ int main(void)
 			
 			last_error = 0;
 		}
+		// normal cycle
 		else if (settings == 0)
 		{
+			calc_recurring_settings();
+			
 			measure();
 			
 			transmit_data(false);
 		}
+		// settings requested
 		else
 		{
 			transmit_settings(false);
 		}
 
 		check_battery();
-
+		
 		pause();
 	}
 }
