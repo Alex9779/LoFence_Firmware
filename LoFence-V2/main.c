@@ -443,23 +443,23 @@ void calc_recurring_settings()
 	settings_interval[1]++;
 
 	// settings_interval[0] is 1/3 of daily max uplink count
-	if (settings_interval[0] == (uint16_t)24 * 60 * 60 / (eeprom_read_dword(&tdc) + 2 * eeprom_read_word(&msr_ms) / 1000) * 1 / 3)
+	if (settings_interval[0] == (uint32_t)24 * 60 * 60 / (eeprom_read_dword(&tdc) + 2 * eeprom_read_word(&msr_ms) / 1000) * 1 / 3)
 	{
 		settings = 1;
 	}
 	// settings_interval[0] is daily max uplink count
-	else if (settings_interval[0] == (uint16_t)24 * 60 * 60 / (eeprom_read_dword(&tdc) + 2 * eeprom_read_word(&msr_ms) / 1000))
+	else if (settings_interval[0] == (uint32_t)24 * 60 * 60 / (eeprom_read_dword(&tdc) + 2 * eeprom_read_word(&msr_ms) / 1000))
 	{
 		settings_interval[0] = 0;
 	}
 
 	// settings_interval[1] is 2/3 of daily max uplink count
-	if (settings_interval[1] == (uint16_t)24 * 60 * 60 / (eeprom_read_dword(&tdc) + 2 * eeprom_read_word(&msr_ms) / 1000) * 2 / 3)
+	if (settings_interval[1] == (uint32_t)24 * 60 * 60 / (eeprom_read_dword(&tdc) + 2 * eeprom_read_word(&msr_ms) / 1000) * 2 / 3)
 	{
 		settings = 2;
 	}
 	// settings_interval[1] is 1/3 of daily max uplink count
-	else if (settings_interval[1] == (uint16_t)24 * 60 * 60 / (eeprom_read_dword(&tdc) + 2 * eeprom_read_word(&msr_ms) / 1000))
+	else if (settings_interval[1] == (uint32_t)24 * 60 * 60 / (eeprom_read_dword(&tdc) + 2 * eeprom_read_word(&msr_ms) / 1000))
 	{
 		settings_interval[1] = 0;
 	}
