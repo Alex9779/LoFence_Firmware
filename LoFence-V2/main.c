@@ -482,16 +482,16 @@ void check_battery()
 	{
 		bat_low_count++;
 	}
-	// if battery is lower than absolue minimum
+	// if battery is lower than absolute minimum
 	else if (volt_bat <= bat_low_min)
 	{
-		// set deactivaion flag
+		// set deactivation flag
 		do_deactivate = true;
 	}
 	// if counter reached and battery still low
 	else if (bat_low_count >= eeprom_read_byte(&bat_low_count_max) && volt_bat < eeprom_read_word(&bat_low))
 	{
-		// set deactivaion flag
+		// set deactivation flag
 		do_deactivate = true;
 	}
 
