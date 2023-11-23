@@ -116,7 +116,7 @@ A link to the software needed is on that page, the firmware files should be [her
 
 To flash the LA66 you have to short *BOOT* PIN with *RX* PIN and then reset the device by grounding *RST* PIN.
 
-To make this easier the PCB contains an unpopulated PIN header labelled *FLASH LA*.
+To make this easier the PCB REV 1.0 contains an unpopulated PIN header labelled *FLASH LA*.
 
 The PINs are directly connected to the LA66 module as follows from top to bottom:
 
