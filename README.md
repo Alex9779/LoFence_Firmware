@@ -83,6 +83,9 @@ In the firmware is a hard-coded value of 3100mV as the absolute minimum battery 
 `0x01` --> set *tdc* (transmit duty cycle) in seconds, value must be 3-byte hexadecimal value  
 Example: `0x0100012C` --> 300 seconds (default value)
 
+`0x04` --> reset LA66 module to initiate re-join
+Example: `0x04`
+
 `0x10` --> set *msr_ms* (time in milliseconds to measure each fence polarity), value must be 2-byte hexadecimal value  
 Example: `0x101770` --> 6000 milliseconds (default value)
 

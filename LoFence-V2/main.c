@@ -226,6 +226,14 @@ void handle_downlink(uint8_t *rxSize)
 			}
 			break;
 		}
+		case 0x04: // reset LA66
+		{
+			if (*rxSize == 1)
+			{
+				reset_join();
+			}
+			break;
+		}
 		case 0x10: // measurement delay for each pole
 		{
 			if (*rxSize == 3)
