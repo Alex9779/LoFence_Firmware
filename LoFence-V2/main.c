@@ -502,6 +502,28 @@ void check_battery()
 	// to prevent triggering false alarms.
 }
 
+void reset_join()
+{
+	LED_TX_set_level(true);
+			
+	log_serial_P(PSTR("Resetting LA66 module...\r\n"));
+	LA66_reset();
+
+	log_serial_P(PSTR("Waiting to join network...\r\n"));
+	if (LA66_waitForJoin() == LA66_ERR_PANIC)
+	{
+		LA66_deactivate();
+
+		while (1)
+		{
+			LED_TX_toggle_level();
+			_delay_ms(100);
+		}
+	}
+	
+	LED_TX_set_level(false);
+}
+
 void deactivate()
 {
 	LED_IDLE_set_level(false);
@@ -560,21 +582,7 @@ int main(void)
 	adc_init();
 	LED_MSR_set_level(false);
 
-	log_serial_P(PSTR("Activating LA66 module...\r\n"));
-	LA66_reset();
-
-	log_serial_P(PSTR("Waiting to join network...\r\n"));
-	if (LA66_waitForJoin() == LA66_ERR_PANIC)
-	{
-		LA66_deactivate();
-
-		while (1)
-		{
-			LED_TX_toggle_level();
-			_delay_ms(100);
-		}
-	}
-	LED_TX_set_level(false);
+	reset_join();
 
 	while (1)
 	{
@@ -592,24 +600,7 @@ int main(void)
 		// if previous cycle threw an error
 		if (last_error != 0)
 		{
-			LED_TX_set_level(true);
-			
-			log_serial_P(PSTR("Resetting LA66 module...\r\n"));
-			LA66_reset();
-
-			log_serial_P(PSTR("Waiting to join network...\r\n"));
-			if (LA66_waitForJoin() == LA66_ERR_PANIC)
-			{
-				LA66_deactivate();
-
-				while (1)
-				{
-					LED_TX_toggle_level();
-					_delay_ms(100);
-				}
-			}
-			
-			LED_TX_set_level(false);
+			reset_join();
 			
 			transmit_error(true);
 			
