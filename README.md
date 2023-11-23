@@ -44,9 +44,9 @@ Remember if you want to run updates and preserve the EEPROM when clearing the fl
 
 ### ISPnub
 
-For easier bulk programming and programming and updating in the wild I use a custom built ISPnub devices called *ISPnub-Stick*.
+For easier bulk programming and programming and updating in the wild I use a custom built ISPnub devices called [ISPnub-Stick](https://github.com/Alex9779/ISPnub-Stick).
 
-Scripts to generate the ISPnub hex files are included you just might need to adjust the paths in the scripts and the path to the ISPnub creator jar file in the post-build events.
+Scripts to generate the ISPnub hex files are included you just might need to adjust the paths in the scripts and the path to the ISPnub creator jar file in the post-build events if building with Atmel/Michrochip Studio 7.
 
 ## Downlink commands
 
@@ -83,9 +83,6 @@ In the firmware is a hard-coded value of 3100mV as the absolute minimum battery 
 `0x01` --> set *tdc* (transmit duty cycle) in seconds, value must be 3-byte hexadecimal value  
 Example: `0x0100012C` --> 300 seconds (default value)
 
-`0x04` --> reset LA66 module to initiate re-join
-Example: `0x04`
-
 `0x10` --> set *msr_ms* (time in milliseconds to measure each fence polarity), value must be 2-byte hexadecimal value  
 Example: `0x101770` --> 6000 milliseconds (default value)
 
@@ -100,6 +97,10 @@ Example: `0x1305` --> 5 cycles (default value)
 
 `0x14` --> set *bat_low_min* (battery voltage in mV which triggers deactivation), value must be 2-byte hexadecimal value  
 Example: `0x120C1C` --> 3100 millivolt (default value)
+
+### Reset LA66 module command
+
+`0x04` --> reset LA66 module to initiate re-join
 
 #### Remarks
 
