@@ -22,7 +22,13 @@ The LA66 tries to get a confirmation for about 30 seconds and tries to send the 
 
 ### Settings uplinks
 
-With special downlink commands (see [Downlink commands](#downlink-commands)) the device can be triggered to sent its settings the next uplink.
+The device sends its two settings uplinks each once about every 24 hours automatically.
+
+So this does not have to be triggered manually with new activated devices, the first settings uplink is sent about 8 hour after activation, the second about 16 hours after activation.
+
+With special downlink commands (see [Downlink commands](#downlink-commands)) the device can also be triggered to sent its settings the next uplink.
+
+If the *tdc* (transmit duty cycle) is greater than one minute then the settings uplinks are sent at half time between normal uplinks.
 
 These uplinks do not contain fence or battery data and are sent unconfirmed on application ports (fPort) **2** or **3**.
 
