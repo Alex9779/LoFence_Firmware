@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - '*'
+    tags:
+      - 'v*'
+  pull_request:
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Install packages
+      run: |
+        sudo apt-get update -y && sudo apt-get install -y avr-libc binutils-avr openjdk-17-jre-headless gcc-avr make unzip
+    - uses: actions/checkout@v3
+    - name: Get tools
+      run: |
+        wget https://www.fischl.de/ispnub/downloads/ISPnubCreator_v1.4.jar
+        wget http://packs.download.atmel.com/Atmel.ATmega_DFP.1.6.364.atpack
+        mv Atmel.ATmega_DFP.1.6.364.atpack Atmel.ATmega_DFP.1.6.364.zip
+        unzip Atmel.ATmega_DFP.1.6.364.zip -d Atmel.ATmega_DFP.1.6.364
+    - name: Update Makefile
+      run: |
+        sed -i 's/SHELL := cmd.exe//g' ./LoFence-V2/Debug/Makefile
+        sed -i 's/C:\\.*\\bin\\//g' ./LoFence-V2/Debug/Makefile
+        sed -i 's/.exe//g' ./LoFence-V2/Debug/Makefile
+        sed -i 's/-B \"C:\\.*\\Packs\\Atmel\\ATmega_DFP\\1.6.364\\gcc\\dev\\atmega328pb/-B \"..\/..\/Atmel.ATmega_DFP.1.6.364\/gcc\/dev\/atmega328pb/g' ./LoFence-V2/Debug/Makefile
+        sed -i 's/C:\\.*\\Packs\\Atmel\\ATmega_DFP\\1.6.364\\include/..\/..\/Atmel.ATmega_DFP.1.6.364\/include/g' ./LoFence-V2/Debug/Makefile
+        sed -i 's/SHELL := cmd.exe//g' ./LoFence-V2/Release/Makefile
+        sed -i 's/C:\\.*\\bin\\//g' ./LoFence-V2/Release/Makefile
+        sed -i 's/.exe//g' ./LoFence-V2/Release/Makefile
+        sed -i 's/-B \"C:\\.*\\Packs\\Atmel\\ATmega_DFP\\1.6.364\\gcc\\dev\\atmega328pb/-B \"..\/..\/Atmel.ATmega_DFP.1.6.364\/gcc\/dev\/atmega328pb/g' ./LoFence-V2/Release/Makefile
+        sed -i 's/C:\\.*\\Packs\\Atmel\\ATmega_DFP\\1.6.364\\include/..\/..\/Atmel.ATmega_DFP.1.6.364\/include/g' ./LoFence-V2/Release/Makefile
+    - name: Update ISPnub scripts
+      run: |
+        sed -i 's/C:\\.*\\Debug\\/.\/LoFence-V2\/Debug\//g' ./LoFence-V2/ISPnub/LoFence-V2_Debug_full.ispnub
+        sed -i 's/C:\\.*\\Debug\\/.\/LoFence-V2\/Debug\//g' ./LoFence-V2/ISPnub/LoFence-V2_Debug_update.ispnub
+        sed -i 's/C:\\.*\\Release\\/.\/LoFence-V2\/Release\//g' ./LoFence-V2/ISPnub/LoFence-V2_Release_full.ispnub
+        sed -i 's/C:\\.*\\Release\\/.\/LoFence-V2\/Debug\//g' ./LoFence-V2/ISPnub/LoFence-V2_Release_update.ispnub
+    - name: Run make for debug
+      run: |
+        mkdir src
+        make all
+      working-directory: ./LoFence-V2/Debug
+    - name: Run make for release
+      run: |
+        mkdir src
+        make all
+      working-directory: ./LoFence-V2/Release
+    - name: Create ISPnub images for debug
+      run: |
+        /usr/lib/jvm/java-17-openjdk-amd64/bin/java -jar ISPnubCreator_v1.4.jar ./LoFence-V2/ISPnub/LoFence-V2_Debug_full.ispnub ./LoFence-V2/Debug/ISPnub_LoFence-V2_full.hex
+        /usr/lib/jvm/java-17-openjdk-amd64/bin/java -jar ISPnubCreator_v1.4.jar ./LoFence-V2/ISPnub/LoFence-V2_Debug_update.ispnub ./LoFence-V2/Debug/ISPnub_LoFence-V2_update.hex
+    - name: Create ISPnub images for release
+      run: |
+        /usr/lib/jvm/java-17-openjdk-amd64/bin/java -jar ISPnubCreator_v1.4.jar ./LoFence-V2/ISPnub/LoFence-V2_Release_full.ispnub ./LoFence-V2/Release/ISPnub_LoFence-V2_full.hex
+        /usr/lib/jvm/java-17-openjdk-amd64/bin/java -jar ISPnubCreator_v1.4.jar ./LoFence-V2/ISPnub/LoFence-V2_Release_update.ispnub ./LoFence-V2/Release/ISPnub_LoFence-V2_update.hex
+    - uses: actions/upload-artifact@v3
+      with:
+        name: LoFence_Firmware
+        path: |
+          */Debug/LoFence-V2.hex
+          */Debug/LoFence-V2.eep
+          */Debug/ISPnub_LoFence-V2_full.hex
+          */Debug/ISPnub_LoFence-V2_update.hex
+          */Release/LoFence-V2.hex
+          */Release/LoFence-V2.eep
+          */Release/ISPnub_LoFence-V2_full.hex
+          */Release/ISPnub_LoFence-V2_update.hex
