@@ -36,9 +36,6 @@ SUBDIRS :=  \
 ../Config/ \
 ../doxygen/ \
 ../doxygen/generator/ \
-../examples/ \
-../examples/include/ \
-../examples/src/ \
 ../include/ \
 ../modules/ \
 ../modules/nvmctrl/ \
@@ -57,8 +54,6 @@ SUBDIRS :=  \
 C_SRCS +=  \
 ../atmel_start.c \
 ../driver_isr.c \
-../examples/src/nvmctrl_basic_example.c \
-../examples/src/usart_basic_example.c \
 ../main.c \
 ../src/variable_delay.c \
 ../src/driver_init.c \
@@ -78,8 +73,6 @@ ASM_SRCS +=
 OBJS +=  \
 atmel_start.o \
 driver_isr.o \
-examples/src/nvmctrl_basic_example.o \
-examples/src/usart_basic_example.o \
 main.o \
 src/variable_delay.o \
 src/driver_init.o \
@@ -92,8 +85,6 @@ src/usart_basic.o
 OBJS_AS_ARGS +=  \
 atmel_start.o \
 driver_isr.o \
-examples/src/nvmctrl_basic_example.o \
-examples/src/usart_basic_example.o \
 main.o \
 src/variable_delay.o \
 src/driver_init.o \
@@ -106,8 +97,6 @@ src/usart_basic.o
 C_DEPS +=  \
 atmel_start.d \
 driver_isr.d \
-examples/src/nvmctrl_basic_example.d \
-examples/src/usart_basic_example.d \
 main.d \
 src/variable_delay.d \
 src/driver_init.d \
@@ -120,8 +109,6 @@ src/usart_basic.d
 C_DEPS_AS_ARGS +=  \
 atmel_start.d \
 driver_isr.d \
-examples/src/nvmctrl_basic_example.d \
-examples/src/usart_basic_example.d \
 main.d \
 src/variable_delay.d \
 src/driver_init.d \
@@ -153,20 +140,6 @@ LINKER_SCRIPT_DEP+=
 	
 
 ./driver_isr.o: .././driver_isr.c
-	@echo Building file: $<
-	@echo Invoking: AVR/GNU C Compiler : 5.4.0
-	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DNDEBUG  -I"../examples/include" -I"../include" -I"../utils" -I"../utils/assembler" -I".." -I"../Config" -I"C:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\ATmega_DFP\1.6.364\include"  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -mmcu=atmega328pb -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\ATmega_DFP\1.6.364\gcc\dev\atmega328pb" -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
-	@echo Finished building: $<
-	
-
-examples/src/nvmctrl_basic_example.o: ../examples/src/nvmctrl_basic_example.c
-	@echo Building file: $<
-	@echo Invoking: AVR/GNU C Compiler : 5.4.0
-	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DNDEBUG  -I"../examples/include" -I"../include" -I"../utils" -I"../utils/assembler" -I".." -I"../Config" -I"C:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\ATmega_DFP\1.6.364\include"  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -mmcu=atmega328pb -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\ATmega_DFP\1.6.364\gcc\dev\atmega328pb" -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
-	@echo Finished building: $<
-	
-
-examples/src/usart_basic_example.o: ../examples/src/usart_basic_example.c
 	@echo Building file: $<
 	@echo Invoking: AVR/GNU C Compiler : 5.4.0
 	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DNDEBUG  -I"../examples/include" -I"../include" -I"../utils" -I"../utils/assembler" -I".." -I"../Config" -I"C:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\ATmega_DFP\1.6.364\include"  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -Wall -mmcu=atmega328pb -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\ATmega_DFP\1.6.364\gcc\dev\atmega328pb" -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 

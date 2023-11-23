@@ -6,10 +6,6 @@ atmel_start.c
 
 driver_isr.c
 
-examples\src\nvmctrl_basic_example.c
-
-examples\src\usart_basic_example.c
-
 main.c
 
 src\variable_delay.c

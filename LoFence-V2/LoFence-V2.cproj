@@ -216,9 +216,6 @@ java -jar "C:\Program Files (x86)\ISPnubCreator\ISPnubCreator_v1.4.jar" $(Soluti
     <Folder Include="Config\" />
     <Folder Include="doxygen\" />
     <Folder Include="doxygen\generator\" />
-    <Folder Include="examples\" />
-    <Folder Include="examples\include\" />
-    <Folder Include="examples\src\" />
     <Folder Include="include\" />
     <Folder Include="modules\" />
     <Folder Include="modules\nvmctrl\" />
@@ -246,18 +243,6 @@ java -jar "C:\Program Files (x86)\ISPnubCreator\ISPnubCreator_v1.4.jar" $(Soluti
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="driver_isr.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="examples\include\nvmctrl_basic_example.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="examples\include\usart_basic_example.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="examples\src\nvmctrl_basic_example.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="examples\src\usart_basic_example.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="include\atmel_start_pins.h">
