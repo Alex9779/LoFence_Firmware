@@ -72,3 +72,4 @@ jobs:
           */Release/LoFence-V2.eep
           */Release/ISPnub_LoFence-V2_full.hex
           */Release/ISPnub_LoFence-V2_update.hex
+          */scripts/flash.sh
