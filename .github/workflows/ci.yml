@@ -62,7 +62,7 @@ jobs:
         /usr/lib/jvm/java-17-openjdk-amd64/bin/java -jar ISPnubCreator_v1.4.jar ./LoFence-V2/ISPnub/LoFence-V2_Release_update.ispnub ./LoFence-V2/Release/ISPnub_LoFence-V2_update.hex
     - uses: actions/upload-artifact@v3
       with:
-        name: LoFence_Firmware
+        name: LoFence-V2_Firmware
         path: |
           */Debug/LoFence-V2.hex
           */Debug/LoFence-V2.eep
