@@ -208,6 +208,28 @@ void measure()
 	LED_MSR_set_level(false);
 }
 
+void reset_join()
+{
+	LED_TX_set_level(true);
+			
+	log_serial_P(PSTR("Resetting LA66 module...\r\n"));
+	LA66_reset();
+
+	log_serial_P(PSTR("Waiting to join network...\r\n"));
+	if (LA66_waitForJoin() == LA66_ERR_PANIC)
+	{
+		LA66_deactivate();
+
+		while (1)
+		{
+			LED_TX_toggle_level();
+			_delay_ms(100);
+		}
+	}
+	
+	LED_TX_set_level(false);
+}
+
 void handle_downlink(uint8_t *rxSize)
 {
 	log_serial_P(PSTR("Downlink received...\r\n"));
@@ -508,28 +530,6 @@ void check_battery()
 	// could be problematic.
 	// The uplink will contain the same fence values as the previous
 	// to prevent triggering false alarms.
-}
-
-void reset_join()
-{
-	LED_TX_set_level(true);
-			
-	log_serial_P(PSTR("Resetting LA66 module...\r\n"));
-	LA66_reset();
-
-	log_serial_P(PSTR("Waiting to join network...\r\n"));
-	if (LA66_waitForJoin() == LA66_ERR_PANIC)
-	{
-		LA66_deactivate();
-
-		while (1)
-		{
-			LED_TX_toggle_level();
-			_delay_ms(100);
-		}
-	}
-	
-	LED_TX_set_level(false);
 }
 
 void deactivate()
