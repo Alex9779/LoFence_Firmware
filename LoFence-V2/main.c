@@ -32,7 +32,7 @@ uint16_t volt_fence_plus = 0;
 uint16_t volt_fence_minus = 0;
 
 uint8_t settings = 0;
-uint16_t settings_interval[] = { 0, 0 };
+uint16_t daily_cycle_count = 0;
 
 uint8_t bat_low_count = 0;
 uint8_t bisect_pause_count = 0;
@@ -208,6 +208,28 @@ void measure()
 	LED_MSR_set_level(false);
 }
 
+void reset_join()
+{
+	LED_TX_set_level(true);
+			
+	log_serial_P(PSTR("Resetting LA66 module...\r\n"));
+	LA66_reset();
+
+	log_serial_P(PSTR("Waiting to join network...\r\n"));
+	if (LA66_waitForJoin() == LA66_ERR_PANIC)
+	{
+		LA66_deactivate();
+
+		while (1)
+		{
+			LED_TX_toggle_level();
+			_delay_ms(100);
+		}
+	}
+	
+	LED_TX_set_level(false);
+}
+
 void handle_downlink(uint8_t *rxSize)
 {
 	log_serial_P(PSTR("Downlink received...\r\n"));
@@ -220,9 +242,8 @@ void handle_downlink(uint8_t *rxSize)
 			{
 				eeprom_write_dword(&tdc, ((uint32_t)buffer_la[1] << 16 | buffer_la[2] << 8 | buffer_la[3]));
 				
-				// reset intervals for recurring settings uplinks
-				settings_interval[0] = 0;
-				settings_interval[1] = 0;
+				// reset interval for recurring settings uplinks
+				daily_cycle_count = 0;
 			}
 			break;
 		}
@@ -282,9 +303,6 @@ void handle_downlink(uint8_t *rxSize)
 				
 				if (settings > 0 && settings <= 2)
 				{
-					// reset interval for recurring settings uplink
-					settings_interval[settings -1] = 0;
-					
 					if (eeprom_read_dword(&tdc) >= 60)
 					{
 						// see calc_recurring_settings() comment for this euqal assignement
@@ -447,33 +465,28 @@ void transmit_error(const bool confirm)
 
 void calc_recurring_settings()
 {
-	settings_interval[0]++;
-	settings_interval[1]++;
+	daily_cycle_count++;
 
-	// settings_interval[0] is 1/3 of daily max uplink count
-	if (settings_interval[0] == (uint32_t)24 * 60 * 60 / (eeprom_read_dword(&tdc) + 2 * eeprom_read_word(&msr_ms) / 1000) * 1 / 3)
+	uint16_t max = (uint32_t)24 * 60 * 60 / (eeprom_read_dword(&tdc) + 2 * eeprom_read_word(&msr_ms) / 1000);
+
+	// settings_interval is 1/3 of daily max uplink count
+	if (daily_cycle_count == max * 1 / 3)
 	{
 		settings = 1;
 	}
-	// settings_interval[0] is daily max uplink count
-	else if (settings_interval[0] == (uint32_t)24 * 60 * 60 / (eeprom_read_dword(&tdc) + 2 * eeprom_read_word(&msr_ms) / 1000))
-	{
-		settings_interval[0] = 0;
-	}
-
-	// settings_interval[1] is 2/3 of daily max uplink count
-	if (settings_interval[1] == (uint32_t)24 * 60 * 60 / (eeprom_read_dword(&tdc) + 2 * eeprom_read_word(&msr_ms) / 1000) * 2 / 3)
+	// settings_interval is 2/3 of daily max uplink count
+	else if (daily_cycle_count == max * 2 / 3)
 	{
 		settings = 2;
 	}
-	// settings_interval[1] is 1/3 of daily max uplink count
-	else if (settings_interval[1] == (uint32_t)24 * 60 * 60 / (eeprom_read_dword(&tdc) + 2 * eeprom_read_word(&msr_ms) / 1000))
+	// settings_interval is daily max uplink count
+	else if (daily_cycle_count == max)
 	{
-		settings_interval[1] = 0;
+		daily_cycle_count = 0;
 	}
 	
 	// if settings are schedule for next cycle and TDC is greater than 1 minute bisect pause for 3 cycles
-	// in current cycle, which will send normal data, when calling pause count will be reduced to 2
+	// in current cycle, which will send normal data, when calling pause count will reduce it to 2
 	// next cycle after TDC/2 will send settings, count will be reduced to 1
 	// next cycle after TDC/2 will send normal data, count will be 0 and the following cycle will occur after normal TDC
 	if (eeprom_read_dword(&tdc) >= 60 && settings > 0)
@@ -508,28 +521,6 @@ void check_battery()
 	// could be problematic.
 	// The uplink will contain the same fence values as the previous
 	// to prevent triggering false alarms.
-}
-
-void reset_join()
-{
-	LED_TX_set_level(true);
-			
-	log_serial_P(PSTR("Resetting LA66 module...\r\n"));
-	LA66_reset();
-
-	log_serial_P(PSTR("Waiting to join network...\r\n"));
-	if (LA66_waitForJoin() == LA66_ERR_PANIC)
-	{
-		LA66_deactivate();
-
-		while (1)
-		{
-			LED_TX_toggle_level();
-			_delay_ms(100);
-		}
-	}
-	
-	LED_TX_set_level(false);
 }
 
 void deactivate()
@@ -576,7 +567,7 @@ int main(void)
 	LED_TX_set_level(true);
 
 	log_serial_P(PSTR("\r\n"));
-	log_serial_P(PSTR("LoFence-V2 v0.9 by Alex9779\r\n"));
+	log_serial_P(PSTR("LoFence-V2 v1.0 by Alex9779\r\n"));
 	log_serial_P(PSTR("https://github.com/alex9779/lofence-v2\r\n"));
 	log_serial_P(PSTR("\r\n"));
 

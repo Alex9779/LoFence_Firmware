@@ -18,11 +18,17 @@ This uplink is the last uplink before the device deactivates itself to prevent t
 
 It includes the same fence data as the last normal uplink but a battery voltage value of **0** to be able to distinguish a fence error condition from a battery low error condition.
 
-The LA66 tries to get a confirmation for about 30 seconds and tries to send the uplink again if no confirmation has been received twice per DR up to current DR - 3.
+The LA66 tries to get a confirmation for about 30 seconds and sends the uplink again if no confirmation has been received twice per DR up to current DR - 3.
 
 ### Settings uplinks
 
-With special downlink commands (see [Downlink commands](#downlink-commands)) the device can be triggered to sent its settings the next uplink.
+The device sends its two settings uplinks each once about every 24 hours automatically.
+
+So this does not have to be triggered manually with new activated devices, the first settings uplink is sent about 8 hour after activation, the second about 16 hours after activation.
+
+With special downlink commands (see [Downlink commands](#downlink-commands)) the device can also be triggered to sent its settings the next uplink.
+
+If the *tdc* (transmit duty cycle) is greater than one minute then the settings uplinks are sent at half time between normal uplinks.
 
 These uplinks do not contain fence or battery data and are sent unconfirmed on application ports (fPort) **2** or **3**.
 
@@ -32,7 +38,9 @@ These uplinks do not contain fence or battery data and are sent unconfirmed on a
 
 Use any AVR SPI suitable programmer (I use an [USBasp](https://www.fischl.de/usbasp/) or a [BusPirate](http://dangerousprototypes.com/docs/Bus_Pirate) for PC to device) and connect it to the SPI port on the PCB and flash the binary firmware file for example with [AVRDUDE](https://www.nongnu.org/avrdude/).
 
-Remember if you want to run updates and preserve the EEPROM when clearing the flash, to set the high fuse for that.
+Remember if you want to run an update and preserve the EEPROM when clearing the flash, to set the high fuse for that.
+
+**REMARK:** Depending on the changes in the firmware a full flash including overwriting the EEPROM might be needed. The firmware does not include managing the EEPROM stored variables on a high level and cannot deal with changes of the EEPROM structure. So running an update when a full flash is needed stored values get messy and the results and unpredictable. Releases needing a full update will be marked and a warning will be shown on the release page.
 
 #### Example AVRDUDE call using USBasp on Windows
 
@@ -44,9 +52,11 @@ Remember if you want to run updates and preserve the EEPROM when clearing the fl
 
 ### ISPnub
 
-For easier bulk programming and programming and updating in the wild I use a custom built ISPnub devices called [ISPnub-Stick](https://github.com/Alex9779/ISPnub-Stick).
+For easier bulk programming and programming and updating in the wild I use a custom built ISPnub device called [ISPnub-Stick](https://github.com/Alex9779/ISPnub-Stick).
 
-Scripts to generate the ISPnub hex files are included you just might need to adjust the paths in the scripts and the path to the ISPnub creator jar file in the post-build events if building with Atmel/Michrochip Studio 7.
+Scripts to generate the ISPnub hex files are included, you just might need to adjust the paths in the scripts and the path to the ISPnub creator jar file in the post-build events if building with Atmel/Michrochip Studio 7.
+
+The repository and the release download contain a script for Linux/Mac which can be used to flash a device or ISPnub with various options.
 
 ## Downlink commands
 
@@ -54,7 +64,7 @@ The firmware is able to change some settings via downlinks sent to the device af
 
 ### Get settings commands
 
-These commands make the device send its settings at the next schedule uplink instead of sending the normal data uplink.
+These commands order the device to send its settings at half time between the uplink the command has been received and the next uplink (if *tdc* is greater than one minute).
 
 `0xFF01` --> send settings part 1
 
@@ -74,10 +84,6 @@ The sent uplink includes:
 - *bat_low_count_max*: amount of subsequent duty cycles the battery has to be unter *bat_low* to trigger self-deactivation
 - *bat_low_min*: battery voltage in mV which triggers immediate deactivation
 
-#### Remark
-
-In the firmware is a hard-coded value of 3100mV as the absolute minimum battery voltage. If the battery goes lower than this value the deactivation is triggered immediatly the next duty cycle.
-
 ### Write settings commands
 
 `0x01` --> set *tdc* (transmit duty cycle) in seconds, value must be 3-byte hexadecimal value  
@@ -92,10 +98,10 @@ Example: `0x112EE0` --> 12000 volt (default value)
 `0x12` --> set *bat_low* (battery voltage in mV which triggers deactivation), value must be 2-byte hexadecimal value  
 Example: `0x120C80` --> 3200 millivolt (default value)
 
-`0x13` --> set *bat_low_count_max* (amount of subsequent duty cycles the battery has to be unter *bat_low* to trigger self-deactivation), value must be 1-byte hexadecimal value  
+`0x13` --> set *bat_low_count_max* (amount of subsequent cycles the battery has to be unter *bat_low* to trigger self-deactivation), value must be 1-byte hexadecimal value  
 Example: `0x1305` --> 5 cycles (default value)
 
-`0x14` --> set *bat_low_min* (battery voltage in mV which triggers deactivation), value must be 2-byte hexadecimal value  
+`0x14` --> set *bat_low_min* (battery voltage in mV which triggers immediate deactivation the next cycle), value must be 2-byte hexadecimal value  
 Example: `0x120C1C` --> 3100 millivolt (default value)
 
 ### Reset LA66 module command
@@ -116,14 +122,14 @@ A link to the software needed is on that page, the firmware files should be [her
 
 To flash the LA66 you have to short *BOOT* PIN with *RX* PIN and then reset the device by grounding *RST* PIN.
 
-To make this easier the PCB contains an unpopulated PIN header labelled *FLASH LA*.
+To make this easier the PCB REV 1.0 contains an unpopulated PIN header labelled *FLASH LA*.
 
-The PINs are directly connected to the LA66 module as follows from top to bottom:
+The PINs are directly connected to the LA66 module as follows from left to right:
 
-- BOOT
-- RX
-- RST
 - GND
+- RST
+- RX
+- BOOT
 
 I usually do not solder PIN headers for this to the PCB but just use loose ones, on for *FLASH LA* and the other for *LA*.
 
