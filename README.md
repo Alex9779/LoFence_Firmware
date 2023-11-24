@@ -124,12 +124,12 @@ To flash the LA66 you have to short *BOOT* PIN with *RX* PIN and then reset the 
 
 To make this easier the PCB REV 1.0 contains an unpopulated PIN header labelled *FLASH LA*.
 
-The PINs are directly connected to the LA66 module as follows from top to bottom:
+The PINs are directly connected to the LA66 module as follows from left to right:
 
-- BOOT
-- RX
-- RST
 - GND
+- RST
+- RX
+- BOOT
 
 I usually do not solder PIN headers for this to the PCB but just use loose ones, on for *FLASH LA* and the other for *LA*.
 
