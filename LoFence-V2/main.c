@@ -305,7 +305,7 @@ void handle_downlink(uint8_t *rxSize)
 				{
 					if (eeprom_read_dword(&tdc) >= 60)
 					{
-						// see calc_recurring_settings() comment for this euqal assignement
+						// see calc_recurring_settings() comment for this equal assignement
 						bisect_pause_count = 3;
 					}
 				}
@@ -469,17 +469,17 @@ void calc_recurring_settings()
 
 	uint16_t max = (uint32_t)24 * 60 * 60 / (eeprom_read_dword(&tdc) + 2 * eeprom_read_word(&msr_ms) / 1000);
 
-	// settings_interval is 1/3 of daily max uplink count
+	// daily_cycle_count is 1/3 of daily max uplink count
 	if (daily_cycle_count == max * 1 / 3)
 	{
 		settings = 1;
 	}
-	// settings_interval is 2/3 of daily max uplink count
+	// daily_cycle_count is 2/3 of daily max uplink count
 	else if (daily_cycle_count == max * 2 / 3)
 	{
 		settings = 2;
 	}
-	// settings_interval is daily max uplink count
+	// daily_cycle_count is daily max uplink count
 	else if (daily_cycle_count == max)
 	{
 		daily_cycle_count = 0;
