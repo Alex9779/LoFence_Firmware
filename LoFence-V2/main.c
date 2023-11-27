@@ -431,7 +431,7 @@ void transmit_error(const bool confirm)
 {
 	LED_TX_set_level(true);
 	
-	uint8_t fPort = 254;
+	uint8_t fPort = 223;
 	uint8_t rxSize = 0;
 	
 	log_serial_P(PSTR("Transmitting error...\r\n"));
@@ -567,7 +567,7 @@ int main(void)
 	LED_TX_set_level(true);
 
 	log_serial_P(PSTR("\r\n"));
-	log_serial_P(PSTR("LoFence-V2 v1.0 by Alex9779\r\n"));
+	log_serial_P(PSTR("LoFence-V2 v1.1 by Alex9779\r\n"));
 	log_serial_P(PSTR("https://github.com/alex9779/lofence-v2\r\n"));
 	log_serial_P(PSTR("\r\n"));
 
