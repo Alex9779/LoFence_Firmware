@@ -1,7 +1,7 @@
 #ifndef MAIN_H_
 #define MAIN_H_
 
-#define VERSION 10
+#define VERSION 11
 
 // time to sleep between measurements
 #define INTERVAL_SECONDS 5 * 60
@@ -27,6 +27,8 @@
 // absolute minimum battery voltage in mV
 // which triggers deactivation right away (next cycle)
 #define BATTERY_ABSOLUTE_MINIMUM 3100
+
+#define DAILY_CONFIRMED_PACKETS 
 
 void log_serial(const char *msg);
 void log_serial_P(const char *msg);
