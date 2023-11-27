@@ -431,7 +431,7 @@ void transmit_error(const bool confirm)
 {
 	LED_TX_set_level(true);
 	
-	uint8_t fPort = 254;
+	uint8_t fPort = 223;
 	uint8_t rxSize = 0;
 	
 	log_serial_P(PSTR("Transmitting error...\r\n"));
