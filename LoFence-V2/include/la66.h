@@ -103,7 +103,7 @@ LA66
 */
 LA66_ReturnCode LA66_waitForJoin();
 
-LA66_ReturnCode LA66_getDr();
+uint8_t LA66_getDr();
 uint16_t LA66_getRx1Dl();
 uint16_t LA66_getRx2Dl();
 
