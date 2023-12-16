@@ -15,7 +15,7 @@
 // maximum voltage of the fence which can
 // be measured with the ADC, depends on actual
 // resistor values, 12kV is theoretical value
-#define MAXIMUM_FENCE_VOLTAGE 12000
+#define MAXIMUM_FENCE_VOLTAGE 11850
 
 // battery low threshold voltage in mV
 #define BATTERY_LOW_THRESHOLD 3200
