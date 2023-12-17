@@ -21,5 +21,4 @@ SPIWRITE  0xAC, 0xE0, 0x00, 0xFC          ; write lock bits
 WAIT 1                                    ; wait 10 ms
 SPIVERIFY 0x58, 0x00, 0x00, 0x00, 0xFC    ; check lock bits
 DISCONNECT                                ; disconnect SPI
-DECCOUNTER 10                             ; allow 10 programming cycles
 END
