@@ -211,7 +211,7 @@ void measure()
 void reset_join()
 {
 	LED_TX_set_level(true);
-			
+	
 	log_serial_P(PSTR("Resetting LA66 module...\r\n"));
 	LA66_reset();
 
