@@ -328,13 +328,12 @@ uint16_t LA66_getRx2Dl()
 LA66_ReturnCode LA66_transmitB(uint8_t *fPort, const bool confirm, char *payload, uint8_t *rxSize)
 {
 	LA66_ReturnCode ret = LA66_ERR_PANIC;
-	
-	// send command
-	// Command format: AT+SENDB=<confirm>,<fPort>,<data_len>,<data>, example AT+SENDB=0,2,8,05820802581ea0a5
 	char buffer[32 + LA66_MAX_BUFF];
 	
+	// Command format: AT+SENDB=<confirm>,<fPort>,<data_len>,<data>, example AT+SENDB=0,2,8,05820802581ea0a5
 	snprintf_P(buffer, sizeof(buffer), PSTR("AT+SENDB=0%d,%u,%u,%s\r\n"), confirm, *fPort, strlen(payload) / 2, payload);
 	
+	// send command
 	ret = send_command(buffer);
 	
 	// check if command was successful
