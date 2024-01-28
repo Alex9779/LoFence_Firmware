@@ -627,7 +627,7 @@ int main(void)
 			transmit_settings(false);
 		}
 
-		#ifndef BENCH
+		#ifndef WORKBENCH
 		check_battery();
 		#endif
 		
