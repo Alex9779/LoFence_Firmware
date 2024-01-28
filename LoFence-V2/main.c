@@ -502,16 +502,23 @@ void check_battery()
 	if (bat_low_count < eeprom_read_byte(&bat_low_count_max) && volt_bat > bat_low_min && volt_bat < eeprom_read_word(&bat_low))
 	{
 		bat_low_count++;
+		
+		snprintf_P(buffer_info, sizeof(buffer_info), PSTR("Battery is low, increased battery low cycle counter to %lu\r\n"), bat_low_count);
+		log_serial(buffer_info);
 	}
 	// if battery is lower than absolute minimum
 	else if (volt_bat <= bat_low_min)
 	{
+		log_serial_P(PSTR("Battery lower than absolute minimum, deactivating next cycle!\r\n"));
+		
 		// set deactivation flag
 		do_deactivate = true;
 	}
 	// if counter reached and battery still low
 	else if (bat_low_count >= eeprom_read_byte(&bat_low_count_max) && volt_bat < eeprom_read_word(&bat_low))
 	{
+		log_serial_P(PSTR("Battery low and cycle count reached, deactivating next cycle!\r\n"));
+		
 		// set deactivation flag
 		do_deactivate = true;
 	}
