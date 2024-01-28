@@ -52,12 +52,13 @@ typedef enum LA66_ReturnCode {
 	LA66_EOB = LA66_MAX_BUFF	  /**< Reached end of buffer passed to function */
 } LA66_ReturnCode;
 
-typedef enum LA66_ReceiveStage {
+typedef enum LA66_Stage {
 	WAIT_FOR_OK,
 	WAIT_FOR_TX,
 	WAIT_FOR_RX,
-	WAIT_FOR_RX2
-} LA66_ReceiveStage;
+	WAIT_FOR_RX2,
+	WAIT_FOR_SYNCTIMEOK
+} LA66_Stage;
 
 //===========
 // FUNCTIONS
@@ -119,5 +120,7 @@ Transmits data over a LoRa network in either confirmed or unconfirmed mode.
 @return LA66_ERR_JOIN You need to join a LoRaWAN network to TX data over one
 */
 LA66_ReturnCode LA66_transmitB(uint8_t *fPort, const bool confirm, char *payload, uint8_t *rxSize);
+
+LA66_ReturnCode LA66_synctime();
 
 #endif /* LA66_H_ */
