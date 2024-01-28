@@ -575,7 +575,7 @@ int main(void)
 
 	log_serial_P(PSTR("\r\n"));
 	log_serial_P(PSTR("LoFence-V2 v1.1 by Alex9779\r\n"));
-	log_serial_P(PSTR("https://github.com/alex9779/lofence-v2\r\n"));
+	log_serial_P(PSTR("https://github.com/Alex9779/LoFence\r\n"));
 	log_serial_P(PSTR("\r\n"));
 
 	_delay_ms(1000);
