@@ -627,7 +627,9 @@ int main(void)
 			transmit_settings(false);
 		}
 
+		#ifndef BENCH
 		check_battery();
+		#endif
 		
 		pause();
 	}
