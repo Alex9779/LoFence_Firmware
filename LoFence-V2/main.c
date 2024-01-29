@@ -286,7 +286,7 @@ void handle_downlink(uint8_t *rxSize)
 				
 				eeprom_write_byte(&daily_confirmed_uplinks, value);
 				
-				daily_confirmed_uplink_count = 0;
+				daily_confirmed_uplink_count = daily_cycle_count / ((daily_cycle_count_max - (daily_cycle_count_max % value)) / value);
 			}
 			break;
 		}
