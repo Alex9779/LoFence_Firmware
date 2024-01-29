@@ -535,7 +535,7 @@ void check_battery()
 	{
 		bat_low_count++;
 		
-		snprintf_P(buffer_info, sizeof(buffer_info), PSTR("Battery is low, increased battery low cycle counter to %lu\r\n"), bat_low_count);
+		snprintf_P(buffer_info, sizeof(buffer_info), PSTR("Battery is low, increased battery low cycle counter to %u\r\n"), bat_low_count);
 		log_serial(buffer_info);
 	}
 	// if battery is lower than absolute minimum
