@@ -107,6 +107,7 @@ LA66_ReturnCode LA66_waitForJoin();
 uint8_t LA66_getDr();
 uint16_t LA66_getRx1Dl();
 uint16_t LA66_getRx2Dl();
+uint32_t LA66_getTimestamp();
 
 //! Sends a confirmed/unconfirmed frame with an application payload of buff.
 /*!

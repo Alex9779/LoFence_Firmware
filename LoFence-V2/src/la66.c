@@ -323,6 +323,23 @@ uint16_t LA66_getRx2Dl()
 	return 0;
 }
 
+// Get timestamp.
+uint32_t LA66_getTimestamp()
+{
+	LA66_buffer response;
+	
+	if (LA66_query_command_P(PSTR("AT+TIMESTAMP=?\r\n"), response) == LA66_SUCCESS)
+	{
+		char timestamp[10];
+		
+		strcpy(timestamp, strchr(response, '(') + 1);
+		
+		return atol(timestamp);
+	}
+	
+	return 0;
+}
+
 // Sends a confirmed/unconfirmed frame with an application payload.
 // Sets a recieved payload and its fPort and size.
 LA66_ReturnCode LA66_transmitB(uint8_t *fPort, const bool confirm, char *payload, uint8_t *rxSize)
