@@ -552,12 +552,23 @@ void pause()
 	LED_IDLE_set_level(true);
 	
 	if (bisect_pause_count > 0) bisect_pause_count--;
+	
+	uint32_t _tdc = eeprom_read_dword(&tdc);
+	int8_t deviation = rand() % (RANDOMNESS * 2) - RANDOMNESS;
+	
+	_tdc /= (bisect_pause_count > 0 ? 2 : 1);
+	deviation /= (bisect_pause_count > 0 ? 2 : 1);
+	
+	if (_tdc > 3 * abs(deviation))
+	{	
+		_tdc += deviation;
+	}
 
-	snprintf_P(buffer_info, sizeof(buffer_info), PSTR("Sleeping for %lu seconds...\r\n"), eeprom_read_dword(&tdc) / (bisect_pause_count > 0 ? 2 : 1));
+	snprintf_P(buffer_info, sizeof(buffer_info), PSTR("Sleeping for %lu seconds...\r\n"), _tdc);
 	log_serial(buffer_info);
 	_delay_ms(500);
 	
-	power_save((eeprom_read_dword(&tdc) + (rand() % (RANDOMNESS * 2) - RANDOMNESS)) / (bisect_pause_count > 0 ? 2 : 1));
+	power_save(_tdc);
 
 	LED_IDLE_set_level(false);
 }
