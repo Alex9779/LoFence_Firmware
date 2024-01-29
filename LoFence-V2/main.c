@@ -560,7 +560,7 @@ void pause()
 	deviation /= (bisect_pause_count > 0 ? 2 : 1);
 	
 	if (_tdc > 3 * abs(deviation))
-	{	
+	{
 		_tdc += deviation;
 	}
 
@@ -600,7 +600,7 @@ int main(void)
 	LED_MSR_set_level(false);
 
 	reset_join();
-
+	
 	while (1)
 	{
 		// check for pending deactivation
