@@ -6,8 +6,8 @@
 // time to sleep between measurements
 #define INTERVAL_SECONDS 5 * 60
 
-// +- time to sleep between measurements in ms
-#define RANDOMNESS 10
+// +- time to sleep between measurements in s
+#define RANDOMNESS 5
 
 // time in ms a measurement should take (per polarity)
 #define MEASURE_MS 6000
