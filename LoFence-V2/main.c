@@ -620,13 +620,12 @@ int main(void)
 	
 	while (1)
 	{
-		daily_cycle_count++;
-		
-		// daily_cycle_count is daily max uplink count
 		if (daily_cycle_count == daily_cycle_count_max)
 		{
 			daily_cycle_count = 0;
 		}
+		
+		daily_cycle_count++;
 		
 		// check for pending deactivation
 		if (do_deactivate)
