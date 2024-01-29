@@ -32,7 +32,9 @@ uint16_t volt_fence_plus = 0;
 uint16_t volt_fence_minus = 0;
 
 uint8_t settings = 0;
-uint16_t daily_cycle_count = 0;
+
+uint32_t daily_cycle_count = 0;
+uint32_t daily_cycle_count_max = 0;
 
 uint8_t bat_low_count = 0;
 uint8_t bisect_pause_count = 0;
@@ -230,6 +232,15 @@ void reset_join()
 	LED_TX_set_level(false);
 }
 
+void calc_dccm()
+{
+	// calculate daily cycle count maximum (tdc + measurements + other delays)
+	daily_cycle_count_max = (uint32_t)24 * 60 * 60 / (eeprom_read_dword(&tdc) + 2 * eeprom_read_word(&msr_ms) / 1000 + 3000);
+	
+	// reset interval for recurring settings uplinks
+	daily_cycle_count = 0;
+}
+
 void handle_downlink(uint8_t *rxSize)
 {
 	log_serial_P(PSTR("Downlink received...\r\n"));
@@ -242,8 +253,7 @@ void handle_downlink(uint8_t *rxSize)
 			{
 				eeprom_write_dword(&tdc, ((uint32_t)buffer_la[1] << 16 | buffer_la[2] << 8 | buffer_la[3]));
 				
-				// reset interval for recurring settings uplinks
-				daily_cycle_count = 0;
+				calc_dccm();
 			}
 			break;
 		}
@@ -465,24 +475,15 @@ void transmit_error(const bool confirm)
 
 void calc_recurring_settings()
 {
-	daily_cycle_count++;
-
-	uint16_t max = (uint32_t)24 * 60 * 60 / (eeprom_read_dword(&tdc) + 2 * eeprom_read_word(&msr_ms) / 1000);
-
 	// daily_cycle_count is 1/3 of daily max uplink count
-	if (daily_cycle_count == max * 1 / 3)
+	if (daily_cycle_count == daily_cycle_count_max * 1 / 3)
 	{
 		settings = 1;
 	}
 	// daily_cycle_count is 2/3 of daily max uplink count
-	else if (daily_cycle_count == max * 2 / 3)
+	else if (daily_cycle_count == daily_cycle_count_max * 2 / 3)
 	{
 		settings = 2;
-	}
-	// daily_cycle_count is daily max uplink count
-	else if (daily_cycle_count == max)
-	{
-		daily_cycle_count = 0;
 	}
 	
 	// if settings are schedule for next cycle and TDC is greater than 1 minute bisect pause for 3 cycles
@@ -601,8 +602,18 @@ int main(void)
 
 	reset_join();
 	
+	calc_dccm();
+	
 	while (1)
 	{
+		daily_cycle_count++;
+		
+		// daily_cycle_count is daily max uplink count
+		if (daily_cycle_count == daily_cycle_count_max)
+		{
+			daily_cycle_count = 0;
+		}
+		
 		// check for pending deactivation
 		if (do_deactivate)
 		{
