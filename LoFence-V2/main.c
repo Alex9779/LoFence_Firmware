@@ -235,7 +235,7 @@ void reset_join()
 void calc_dccm()
 {
 	// calculate daily cycle count maximum (tdc + measurements + other delays)
-	daily_cycle_count_max = (uint32_t)24 * 60 * 60 / (eeprom_read_dword(&tdc) + 2 * eeprom_read_word(&msr_ms) / 1000 + 3000);
+	daily_cycle_count_max = (uint32_t)24 * 60 * 60 / (eeprom_read_dword(&tdc) + 2 * eeprom_read_word(&msr_ms) / 1000 + 3);
 	
 	// reset interval for recurring settings uplinks
 	daily_cycle_count = 0;
