@@ -448,7 +448,7 @@ void transmit_settings(const bool confirm)
 	switch (settings)
 	{
 		case 1:
-		snprintf_P(buffer_la, sizeof(buffer_la), PSTR("%02X%06lX%02X"), VERSION, eeprom_read_dword(&tdc), eeprom_read_word(&daily_confirmed_uplinks));
+		snprintf_P(buffer_la, sizeof(buffer_la), PSTR("%02X%06lX%02X"), VERSION, eeprom_read_dword(&tdc), eeprom_read_byte(&daily_confirmed_uplinks));
 		break;
 		
 		case 2:
