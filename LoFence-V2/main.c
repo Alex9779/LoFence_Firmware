@@ -275,7 +275,15 @@ void handle_downlink(uint8_t *rxSize)
 			}
 			break;
 		}
-		case 0x10: // measurement delay for each pole
+		case 0x20: // maximum fence voltage at ADC max, this depends on actual resistor values
+		{
+			if (*rxSize == 3)
+			{
+				eeprom_write_word(&max_volt, (buffer_la[1] << 8 | buffer_la[2]));
+			}
+			break;
+		}
+		case 0x21: // measurement delay for each pole
 		{
 			if (*rxSize == 3)
 			{
@@ -290,15 +298,7 @@ void handle_downlink(uint8_t *rxSize)
 			}
 			break;
 		}
-		case 0x11: // maximum fence voltage at ADC max, this depends on actual resistor values
-		{
-			if (*rxSize == 3)
-			{
-				eeprom_write_word(&max_volt, (buffer_la[1] << 8 | buffer_la[2]));
-			}
-			break;
-		}
-		case 0x12: // battery low voltage
+		case 0x30: // battery low voltage
 		{
 			if (*rxSize == 3)
 			{
@@ -306,7 +306,7 @@ void handle_downlink(uint8_t *rxSize)
 			}
 			break;
 		}
-		case 0x13: // battery low cycle count
+		case 0x31: // battery low cycle count
 		{
 			if (*rxSize == 2)
 			{
@@ -314,7 +314,7 @@ void handle_downlink(uint8_t *rxSize)
 			}
 			break;
 		}
-		case 0x14: // battery low minimum voltage
+		case 0x32: // battery low minimum voltage
 		{
 			if (*rxSize == 3)
 			{

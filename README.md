@@ -89,20 +89,20 @@ The sent uplink includes:
 `0x01` --> set *tdc* (transmit duty cycle) in seconds, value must be 3-byte hexadecimal value  
 Example: `0x0100012C` --> 300 seconds (default value)
 
-`0x10` --> set *msr_ms* (time in milliseconds to measure each fence polarity), value must be 2-byte hexadecimal value  
-Example: `0x101770` --> 6000 milliseconds (default value)
+`0x20` --> set *max_volt* (maximum measurable voltage), value must be 2-byte hexadecimal value  
+Example: `0x202EE0` --> 12000 volt (default value)
 
-`0x11` --> set *max_volt* (maximum measurable voltage), value must be 2-byte hexadecimal value  
-Example: `0x112EE0` --> 12000 volt (default value)
+`0x21` --> set *msr_ms* (time in milliseconds to measure each fence polarity), value must be 2-byte hexadecimal value  
+Example: `0x211770` --> 6000 milliseconds (default value)
 
-`0x12` --> set *bat_low* (battery voltage in mV which triggers deactivation), value must be 2-byte hexadecimal value  
-Example: `0x120C80` --> 3200 millivolt (default value)
+`0x30` --> set *bat_low* (battery voltage in mV which triggers deactivation), value must be 2-byte hexadecimal value  
+Example: `0x300C80` --> 3200 millivolt (default value)
 
-`0x13` --> set *bat_low_count_max* (amount of subsequent cycles the battery has to be unter *bat_low* to trigger self-deactivation), value must be 1-byte hexadecimal value  
-Example: `0x1305` --> 5 cycles (default value)
+`0x31` --> set *bat_low_count_max* (amount of subsequent cycles the battery has to be unter *bat_low* to trigger self-deactivation), value must be 1-byte hexadecimal value  
+Example: `0x3105` --> 5 cycles (default value)
 
-`0x14` --> set *bat_low_min* (battery voltage in mV which triggers immediate deactivation the next cycle), value must be 2-byte hexadecimal value  
-Example: `0x120C1C` --> 3100 millivolt (default value)
+`0x32` --> set *bat_low_min* (battery voltage in mV which triggers immediate deactivation the next cycle), value must be 2-byte hexadecimal value  
+Example: `0x320C1C` --> 3100 millivolt (default value)
 
 ### Reset LA66 module command
 
