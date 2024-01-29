@@ -72,10 +72,17 @@ The sent uplink includes:
 
 - *version*: an integer number for the firmware version on the device
 - *tdc*: transmit duty cycle, the time the device sleeps in seconds between each full measurement cycle, a full measurement takes about the time to measure each polarity plus about 8 seconds
-- *msr_ms*: time in milliseconds to measure each fence polarity
-- *max_volt*: maximum measurable voltage
+- *daily_confirmed_uplinks*: amount of uplinks to send confirmed per day
 
 `0xFF02` --> send settings part 2
+
+The sent uplink includes:
+
+- *version*: an integer number for the firmware version on the device
+- *max_volt*: maximum measurable voltage
+- *msr_ms*: time in milliseconds to measure each fence polarity
+
+`0xFF03` --> send settings part 3
 
 The sent uplink includes:
 

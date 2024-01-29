@@ -343,7 +343,7 @@ void handle_downlink(uint8_t *rxSize)
 			{
 				settings = buffer_la[1];
 				
-				if (settings > 0 && settings <= 2)
+				if (settings > 0 && settings <= 3)
 				{
 					if (eeprom_read_dword(&tdc) >= 60)
 					{
@@ -352,7 +352,7 @@ void handle_downlink(uint8_t *rxSize)
 					}
 				}
 				// discard out of range commands
-				else if (settings > 2)
+				else if (settings > 3)
 				{
 					settings = 0;
 				}
@@ -448,10 +448,14 @@ void transmit_settings(const bool confirm)
 	switch (settings)
 	{
 		case 1:
-		snprintf_P(buffer_la, sizeof(buffer_la), PSTR("%02X%06lX%04X%04X"), VERSION, eeprom_read_dword(&tdc), eeprom_read_word(&msr_ms), eeprom_read_word(&max_volt));
+		snprintf_P(buffer_la, sizeof(buffer_la), PSTR("%02X%06lX%02X"), VERSION, eeprom_read_dword(&tdc), eeprom_read_word(&daily_confirmed_uplinks));
 		break;
 		
 		case 2:
+		snprintf_P(buffer_la, sizeof(buffer_la), PSTR("%02X%04X%04X"), VERSION, eeprom_read_word(&max_volt), eeprom_read_word(&msr_ms));
+		break;
+		
+		case 3:
 		snprintf_P(buffer_la, sizeof(buffer_la), PSTR("%02X%04X%02X%04X"), VERSION, eeprom_read_word(&bat_low), eeprom_read_byte(&bat_low_count_max), eeprom_read_word(&bat_low_min));
 		break;
 	}
@@ -521,15 +525,20 @@ void transmit_error(const bool confirm)
 
 void calc_recurring_settings()
 {
-	// daily_cycle_count is 1/3 of daily max uplink count
-	if (daily_cycle_count == daily_cycle_count_max * 1 / 3)
+	// daily_cycle_count is 1/4 of daily max uplink count
+	if (daily_cycle_count == daily_cycle_count_max * 1 / 4)
 	{
 		settings = 1;
 	}
-	// daily_cycle_count is 2/3 of daily max uplink count
-	else if (daily_cycle_count == daily_cycle_count_max * 2 / 3)
+	// daily_cycle_count is 2/4 of daily max uplink count
+	else if (daily_cycle_count == daily_cycle_count_max * 2 / 4)
 	{
 		settings = 2;
+	}
+	// daily_cycle_count is 3/4 of daily max uplink count
+	else if (daily_cycle_count == daily_cycle_count_max * 3 / 4)
+	{
+		settings = 3;
 	}
 	
 	// if settings are schedule for next cycle and TDC is greater than 1 minute bisect pause for 3 cycles
