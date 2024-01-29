@@ -251,7 +251,14 @@ void handle_downlink(uint8_t *rxSize)
 		{
 			if (*rxSize == 4)
 			{
-				eeprom_write_dword(&tdc, ((uint32_t)buffer_la[1] << 16 | buffer_la[2] << 8 | buffer_la[3]));
+				uint32_t value = ((uint32_t)buffer_la[1] << 16 | buffer_la[2] << 8 | buffer_la[3]);
+				
+				if (value == 0)
+				{
+					value = INTERVAL_SECONDS;
+				}
+				
+				eeprom_write_dword(&tdc, value);
 				
 				calc_dccm();
 			}
@@ -269,7 +276,14 @@ void handle_downlink(uint8_t *rxSize)
 		{
 			if (*rxSize == 3)
 			{
-				eeprom_write_word(&msr_ms, (buffer_la[1] << 8 | buffer_la[2]));
+				uint16_t value = (buffer_la[1] << 8 | buffer_la[2]);
+				
+				if (value == 0)
+				{
+					value = MEASURE_MS;
+				}
+				
+				eeprom_write_word(&msr_ms, value);
 			}
 			break;
 		}
