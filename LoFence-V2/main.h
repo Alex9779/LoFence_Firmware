@@ -6,6 +6,9 @@
 // time to sleep between measurements
 #define INTERVAL_SECONDS 5 * 60
 
+// amount of uplink to send confirmed per day
+#define DAILY_CONFIRMED_UPLINKS 1
+
 // +- time to sleep between measurements in s
 #define RANDOMNESS 5
 
@@ -27,8 +30,6 @@
 // absolute minimum battery voltage in mV
 // which triggers deactivation right away (next cycle)
 #define BATTERY_ABSOLUTE_MINIMUM 3100
-
-#define DAILY_CONFIRMED_PACKETS 
 
 void log_serial(const char *msg);
 void log_serial_P(const char *msg);

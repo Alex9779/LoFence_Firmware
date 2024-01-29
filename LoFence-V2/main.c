@@ -15,6 +15,7 @@ uint16_t EEMEM max_volt = MAXIMUM_FENCE_VOLTAGE;
 uint16_t EEMEM bat_low = BATTERY_LOW_THRESHOLD;
 uint8_t EEMEM bat_low_count_max = BATTERY_LOW_MAX_CYCLES;
 uint16_t EEMEM bat_low_min = BATTERY_ABSOLUTE_MINIMUM;
+uint8_t EEMEM daily_confirmed_uplinks = DAILY_CONFIRMED_UPLINKS;
 
 volatile uint32_t seconds = 0;
 
@@ -35,6 +36,8 @@ uint8_t settings = 0;
 
 uint32_t daily_cycle_count = 0;
 uint32_t daily_cycle_count_max = 0;
+
+uint8_t daily_confirmed_uplink_count = 0;
 
 uint8_t bat_low_count = 0;
 uint8_t bisect_pause_count = 0;
@@ -272,6 +275,18 @@ void handle_downlink(uint8_t *rxSize)
 			if (*rxSize == 1)
 			{
 				reset_join();
+			}
+			break;
+		}
+		case 0x10: // daily confirmed uplinks
+		{
+			if (*rxSize == 2)
+			{
+				uint8_t value = buffer_la[1];
+				
+				eeprom_write_byte(&daily_confirmed_uplinks, value);
+				
+				daily_confirmed_uplink_count = 0;
 			}
 			break;
 		}
@@ -527,6 +542,21 @@ void calc_recurring_settings()
 	}
 }
 
+bool get_uplink_confirmation()
+{
+	uint8_t _daily_confirmed_uplinks = eeprom_read_byte(&daily_confirmed_uplinks);
+	
+	if ((_daily_confirmed_uplinks > 0 && daily_cycle_count == daily_cycle_count_max / _daily_confirmed_uplinks * (daily_confirmed_uplink_count + 1))
+	|| daily_cycle_count_max <= _daily_confirmed_uplinks)
+	{
+		daily_confirmed_uplink_count++;
+		
+		return true;
+	}
+	
+	return false;
+}
+
 void check_battery()
 {
 	// if maximum cycles the battery has been low is not reached
@@ -666,7 +696,7 @@ int main(void)
 			
 			measure();
 			
-			transmit_data(false);
+			transmit_data(get_uplink_confirmation());
 		}
 		// settings requested
 		else
@@ -681,6 +711,7 @@ int main(void)
 		if (daily_cycle_count == daily_cycle_count_max)
 		{
 			daily_cycle_count = 0;
+			daily_confirmed_uplink_count = 0;
 		}
 		
 		pause();

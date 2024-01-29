@@ -89,6 +89,9 @@ The sent uplink includes:
 `0x01` --> set *tdc* (transmit duty cycle) in seconds, value must be 3-byte hexadecimal value  
 Example: `0x0100012C` --> 300 seconds (default value)
 
+`0x10` --> set *daily_confirmed_uplinks* (daily confirmed uplinks), value must be 1-byte hexadecimal value  
+Example: `0x1001` --> 1 confirmed uplink per day (default value)
+
 `0x20` --> set *max_volt* (maximum measurable voltage), value must be 2-byte hexadecimal value  
 Example: `0x202EE0` --> 12000 volt (default value)
 
