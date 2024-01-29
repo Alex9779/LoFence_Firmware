@@ -620,11 +620,6 @@ int main(void)
 	
 	while (1)
 	{
-		if (daily_cycle_count == daily_cycle_count_max)
-		{
-			daily_cycle_count = 0;
-		}
-		
 		daily_cycle_count++;
 		
 		// check for pending deactivation
@@ -665,6 +660,11 @@ int main(void)
 		#ifndef WORKBENCH
 		check_battery();
 		#endif
+		
+		if (daily_cycle_count == daily_cycle_count_max)
+		{
+			daily_cycle_count = 0;
+		}
 		
 		pause();
 	}
