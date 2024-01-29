@@ -375,7 +375,14 @@ void transmit_data(const bool confirm)
 	uint8_t fPort = 1;
 	uint8_t rxSize = 0;
 
-	log_serial_P(PSTR("Transmitting data...\r\n"));
+	if (confirm)
+	{
+		log_serial_P(PSTR("Transmitting data confirmed...\r\n"));
+	}
+	else
+	{
+		log_serial_P(PSTR("Transmitting data...\r\n"));
+	}
 
 	snprintf_P(buffer_la, sizeof(buffer_la), PSTR("%04X%04X%04X"), volt_bat, volt_fence_plus, volt_fence_minus);
 
@@ -411,7 +418,14 @@ void transmit_settings(const bool confirm)
 	uint8_t fPort = settings + 1;
 	uint8_t rxSize = 0;
 	
-	log_serial_P(PSTR("Transmitting settings...\r\n"));
+	if (confirm)
+	{
+		log_serial_P(PSTR("Transmitting settings confirmed...\r\n"));
+	}
+	else
+	{
+		log_serial_P(PSTR("Transmitting settings...\r\n"));
+	}
 	
 	switch (settings)
 	{
