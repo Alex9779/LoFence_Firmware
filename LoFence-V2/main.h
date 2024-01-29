@@ -12,13 +12,13 @@
 // +- time to sleep between measurements in s
 #define RANDOMNESS 5
 
-// time in ms a measurement should take (per polarity)
-#define MEASURE_MS 6000
-
 // maximum voltage of the fence which can
 // be measured with the ADC, depends on actual
 // resistor values, 12kV is theoretical value
 #define MAXIMUM_FENCE_VOLTAGE 11850
+
+// time in ms a measurement should take (per polarity)
+#define MEASURE_MS 6000
 
 // battery low threshold voltage in mV
 #define BATTERY_LOW_THRESHOLD 3200
