@@ -648,7 +648,6 @@ void pause()
 
 int main(void)
 {
-
 	atmel_start_init();
 
 	LED_IDLE_set_level(true);
