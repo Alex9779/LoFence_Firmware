@@ -681,15 +681,11 @@ int main(void)
 	_delay_ms(1000);
 
 	ACTIVATE_set_level(true);
-
 	LED_IDLE_set_level(false);
 
 	seed_rand();
-
-	adc_init();
-	
-	reset_join();
-	
+	adc_init();	
+	reset_join();	
 	calc_dccm();
 	
 	while (1)
