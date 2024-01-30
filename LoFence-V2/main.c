@@ -112,6 +112,8 @@ void log_serial_P(const char *msg)
 
 void adc_init()
 {
+	log_serial_P(PSTR("Initializing ADC...\r\n"));
+	
 	PRR0 &= ~(1 << PRADC); // Enable
 
 	DIDR0 = (1 << ADC0D) | (1 << ADC2D) | (1 << ADC4D); // Disable input buffer
@@ -138,6 +140,8 @@ void adc_init()
 
 	ADCSRA &= ~(1 << ADEN); // Disable ADC
 	PRR0 |= (1 << PRADC);	// Disable ADC
+	
+	LED_MSR_set_level(false);
 }
 
 void measure()
@@ -682,9 +686,7 @@ int main(void)
 
 	seed_rand();
 
-	log_serial_P(PSTR("Initializing ADC...\r\n"));
 	adc_init();
-	LED_MSR_set_level(false);
 	
 	reset_join();
 	
