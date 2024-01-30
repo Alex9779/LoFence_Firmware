@@ -566,6 +566,21 @@ bool get_uplink_confirmation()
 	return false;
 }
 
+void seed_rand()
+{
+	uint16_t seed = 0;
+	
+	for (uint8_t i = 14; i < 24; i += 2)
+	{
+		seed += (boot_signature_byte_get(i) << 8 | boot_signature_byte_get(i));
+	}
+	
+	snprintf_P(buffer_info, sizeof(buffer_info), PSTR("Random seed: %u\r\n"), seed);
+	log_serial(buffer_info);
+	
+	srand(seed);
+}
+
 void check_battery()
 {
 	// if maximum cycles the battery has been low is not reached
@@ -665,10 +680,12 @@ int main(void)
 
 	LED_IDLE_set_level(false);
 
+	seed_rand();
+
 	log_serial_P(PSTR("Initializing ADC...\r\n"));
 	adc_init();
 	LED_MSR_set_level(false);
-
+	
 	reset_join();
 	
 	calc_dccm();
