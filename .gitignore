@@ -1,6 +1,7 @@
 .vs/
 **/Release/*
 **/Debug/*
+**/Debug-Workbench/*
 !**/Release/Makefile
 !**/Release/makedep.mk
 !**/Debug/Makefile

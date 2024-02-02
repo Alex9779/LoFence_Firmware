@@ -15,6 +15,7 @@ uint16_t EEMEM max_volt = MAXIMUM_FENCE_VOLTAGE;
 uint16_t EEMEM bat_low = BATTERY_LOW_THRESHOLD;
 uint8_t EEMEM bat_low_count_max = BATTERY_LOW_MAX_CYCLES;
 uint16_t EEMEM bat_low_min = BATTERY_ABSOLUTE_MINIMUM;
+uint8_t EEMEM daily_confirmed_uplinks = DAILY_CONFIRMED_UPLINKS;
 
 volatile uint32_t seconds = 0;
 
@@ -32,7 +33,11 @@ uint16_t volt_fence_plus = 0;
 uint16_t volt_fence_minus = 0;
 
 uint8_t settings = 0;
-uint16_t daily_cycle_count = 0;
+
+uint32_t daily_cycle_count = 0;
+uint32_t daily_cycle_count_max = 0;
+
+uint8_t daily_confirmed_uplink_count = 0;
 
 uint8_t bat_low_count = 0;
 uint8_t bisect_pause_count = 0;
@@ -107,6 +112,8 @@ void log_serial_P(const char *msg)
 
 void adc_init()
 {
+	log_serial_P(PSTR("Initializing ADC...\r\n"));
+	
 	PRR0 &= ~(1 << PRADC); // Enable
 
 	DIDR0 = (1 << ADC0D) | (1 << ADC2D) | (1 << ADC4D); // Disable input buffer
@@ -133,6 +140,8 @@ void adc_init()
 
 	ADCSRA &= ~(1 << ADEN); // Disable ADC
 	PRR0 |= (1 << PRADC);	// Disable ADC
+	
+	LED_MSR_set_level(false);
 }
 
 void measure()
@@ -211,7 +220,7 @@ void measure()
 void reset_join()
 {
 	LED_TX_set_level(true);
-			
+	
 	log_serial_P(PSTR("Resetting LA66 module...\r\n"));
 	LA66_reset();
 
@@ -230,6 +239,18 @@ void reset_join()
 	LED_TX_set_level(false);
 }
 
+void calc_dccm()
+{
+	// calculate daily cycle count maximum (tdc + measurements + other delays)
+	daily_cycle_count_max = (uint32_t)24 * 60 * 60 / (eeprom_read_dword(&tdc) + 2 * eeprom_read_word(&msr_ms) / 1000 + 3);
+	
+	snprintf_P(buffer_info, sizeof(buffer_info), PSTR("Maximum daily cycles: %lu\r\n"), daily_cycle_count_max);
+	log_serial(buffer_info);
+	
+	// reset interval for recurring settings uplinks
+	daily_cycle_count = 0;
+}
+
 void handle_downlink(uint8_t *rxSize)
 {
 	log_serial_P(PSTR("Downlink received...\r\n"));
@@ -240,10 +261,16 @@ void handle_downlink(uint8_t *rxSize)
 		{
 			if (*rxSize == 4)
 			{
-				eeprom_write_dword(&tdc, ((uint32_t)buffer_la[1] << 16 | buffer_la[2] << 8 | buffer_la[3]));
+				uint32_t value = ((uint32_t)buffer_la[1] << 16 | buffer_la[2] << 8 | buffer_la[3]);
 				
-				// reset interval for recurring settings uplinks
-				daily_cycle_count = 0;
+				if (value == 0)
+				{
+					value = INTERVAL_SECONDS;
+				}
+				
+				eeprom_write_dword(&tdc, value);
+				
+				calc_dccm();
 			}
 			break;
 		}
@@ -255,15 +282,19 @@ void handle_downlink(uint8_t *rxSize)
 			}
 			break;
 		}
-		case 0x10: // measurement delay for each pole
+		case 0x10: // daily confirmed uplinks
 		{
-			if (*rxSize == 3)
+			if (*rxSize == 2)
 			{
-				eeprom_write_word(&msr_ms, (buffer_la[1] << 8 | buffer_la[2]));
+				uint8_t value = buffer_la[1];
+				
+				eeprom_write_byte(&daily_confirmed_uplinks, value);
+				
+				daily_confirmed_uplink_count = daily_cycle_count / (daily_cycle_count_max / value);
 			}
 			break;
 		}
-		case 0x11: // maximum fence voltage at ADC max, this depends on actual resistor values
+		case 0x20: // maximum fence voltage at ADC max, this depends on actual resistor values
 		{
 			if (*rxSize == 3)
 			{
@@ -271,7 +302,22 @@ void handle_downlink(uint8_t *rxSize)
 			}
 			break;
 		}
-		case 0x12: // battery low voltage
+		case 0x21: // measurement delay for each pole
+		{
+			if (*rxSize == 3)
+			{
+				uint16_t value = (buffer_la[1] << 8 | buffer_la[2]);
+				
+				if (value == 0)
+				{
+					value = MEASURE_MS;
+				}
+				
+				eeprom_write_word(&msr_ms, value);
+			}
+			break;
+		}
+		case 0x30: // battery low voltage
 		{
 			if (*rxSize == 3)
 			{
@@ -279,7 +325,7 @@ void handle_downlink(uint8_t *rxSize)
 			}
 			break;
 		}
-		case 0x13: // battery low cycle count
+		case 0x31: // battery low cycle count
 		{
 			if (*rxSize == 2)
 			{
@@ -287,7 +333,7 @@ void handle_downlink(uint8_t *rxSize)
 			}
 			break;
 		}
-		case 0x14: // battery low minimum voltage
+		case 0x32: // battery low minimum voltage
 		{
 			if (*rxSize == 3)
 			{
@@ -301,16 +347,16 @@ void handle_downlink(uint8_t *rxSize)
 			{
 				settings = buffer_la[1];
 				
-				if (settings > 0 && settings <= 2)
+				if (settings > 0 && settings <= 3)
 				{
 					if (eeprom_read_dword(&tdc) >= 60)
 					{
-						// see calc_recurring_settings() comment for this euqal assignement
+						// see calc_recurring_settings() comment for this equal assignement
 						bisect_pause_count = 3;
 					}
 				}
 				// discard out of range commands
-				else if (settings > 2)
+				else if (settings > 3)
 				{
 					settings = 0;
 				}
@@ -351,7 +397,14 @@ void transmit_data(const bool confirm)
 	uint8_t fPort = 1;
 	uint8_t rxSize = 0;
 
-	log_serial_P(PSTR("Transmitting data...\r\n"));
+	if (confirm)
+	{
+		log_serial_P(PSTR("Transmitting data confirmed...\r\n"));
+	}
+	else
+	{
+		log_serial_P(PSTR("Transmitting data...\r\n"));
+	}
 
 	snprintf_P(buffer_la, sizeof(buffer_la), PSTR("%04X%04X%04X"), volt_bat, volt_fence_plus, volt_fence_minus);
 
@@ -387,15 +440,26 @@ void transmit_settings(const bool confirm)
 	uint8_t fPort = settings + 1;
 	uint8_t rxSize = 0;
 	
-	log_serial_P(PSTR("Transmitting settings...\r\n"));
+	if (confirm)
+	{
+		log_serial_P(PSTR("Transmitting settings confirmed...\r\n"));
+	}
+	else
+	{
+		log_serial_P(PSTR("Transmitting settings...\r\n"));
+	}
 	
 	switch (settings)
 	{
 		case 1:
-		snprintf_P(buffer_la, sizeof(buffer_la), PSTR("%02X%06lX%04X%04X"), VERSION, eeprom_read_dword(&tdc), eeprom_read_word(&msr_ms), eeprom_read_word(&max_volt));
+		snprintf_P(buffer_la, sizeof(buffer_la), PSTR("%02X%06lX%02X"), VERSION, eeprom_read_dword(&tdc), eeprom_read_byte(&daily_confirmed_uplinks));
 		break;
 		
 		case 2:
+		snprintf_P(buffer_la, sizeof(buffer_la), PSTR("%02X%04X%04X"), VERSION, eeprom_read_word(&max_volt), eeprom_read_word(&msr_ms));
+		break;
+		
+		case 3:
 		snprintf_P(buffer_la, sizeof(buffer_la), PSTR("%02X%04X%02X%04X"), VERSION, eeprom_read_word(&bat_low), eeprom_read_byte(&bat_low_count_max), eeprom_read_word(&bat_low_min));
 		break;
 	}
@@ -465,24 +529,20 @@ void transmit_error(const bool confirm)
 
 void calc_recurring_settings()
 {
-	daily_cycle_count++;
-
-	uint16_t max = (uint32_t)24 * 60 * 60 / (eeprom_read_dword(&tdc) + 2 * eeprom_read_word(&msr_ms) / 1000);
-
-	// settings_interval is 1/3 of daily max uplink count
-	if (daily_cycle_count == max * 1 / 3)
+	// daily_cycle_count is 1/4 of daily max uplink count
+	if (daily_cycle_count == daily_cycle_count_max * 1 / 4)
 	{
 		settings = 1;
 	}
-	// settings_interval is 2/3 of daily max uplink count
-	else if (daily_cycle_count == max * 2 / 3)
+	// daily_cycle_count is 2/4 of daily max uplink count
+	else if (daily_cycle_count == daily_cycle_count_max * 2 / 4)
 	{
 		settings = 2;
 	}
-	// settings_interval is daily max uplink count
-	else if (daily_cycle_count == max)
+	// daily_cycle_count is 3/4 of daily max uplink count
+	else if (daily_cycle_count == daily_cycle_count_max * 3 / 4)
 	{
-		daily_cycle_count = 0;
+		settings = 3;
 	}
 	
 	// if settings are schedule for next cycle and TDC is greater than 1 minute bisect pause for 3 cycles
@@ -495,6 +555,36 @@ void calc_recurring_settings()
 	}
 }
 
+bool get_uplink_confirmation()
+{
+	uint8_t _daily_confirmed_uplinks = eeprom_read_byte(&daily_confirmed_uplinks);
+	
+	if ((_daily_confirmed_uplinks > 0 && daily_cycle_count == daily_cycle_count_max / _daily_confirmed_uplinks * (daily_confirmed_uplink_count + 1))
+	|| daily_cycle_count_max <= _daily_confirmed_uplinks)
+	{
+		daily_confirmed_uplink_count++;
+		
+		return true;
+	}
+	
+	return false;
+}
+
+void seed_rand()
+{
+	uint16_t seed = 0;
+	
+	for (uint8_t i = 14; i < 24; i += 2)
+	{
+		seed += (boot_signature_byte_get(i) << 8 | boot_signature_byte_get(i));
+	}
+	
+	snprintf_P(buffer_info, sizeof(buffer_info), PSTR("Random seed: %u\r\n"), seed);
+	log_serial(buffer_info);
+	
+	srand(seed);
+}
+
 void check_battery()
 {
 	// if maximum cycles the battery has been low is not reached
@@ -502,16 +592,23 @@ void check_battery()
 	if (bat_low_count < eeprom_read_byte(&bat_low_count_max) && volt_bat > bat_low_min && volt_bat < eeprom_read_word(&bat_low))
 	{
 		bat_low_count++;
+		
+		snprintf_P(buffer_info, sizeof(buffer_info), PSTR("Battery is low, battery low cycle counter: %u\r\n"), bat_low_count);
+		log_serial(buffer_info);
 	}
 	// if battery is lower than absolute minimum
 	else if (volt_bat <= bat_low_min)
 	{
+		log_serial_P(PSTR("Battery lower than absolute minimum, deactivating next cycle!\r\n"));
+		
 		// set deactivation flag
 		do_deactivate = true;
 	}
 	// if counter reached and battery still low
 	else if (bat_low_count >= eeprom_read_byte(&bat_low_count_max) && volt_bat < eeprom_read_word(&bat_low))
 	{
+		log_serial_P(PSTR("Battery low and cycle count reached, deactivating next cycle!\r\n"));
+		
 		// set deactivation flag
 		do_deactivate = true;
 	}
@@ -545,12 +642,23 @@ void pause()
 	LED_IDLE_set_level(true);
 	
 	if (bisect_pause_count > 0) bisect_pause_count--;
+	
+	uint32_t _tdc = eeprom_read_dword(&tdc);
+	int8_t deviation = rand() % (RANDOMNESS * 2) - RANDOMNESS;
+	
+	_tdc /= (bisect_pause_count > 0 ? 2 : 1);
+	deviation /= (bisect_pause_count > 0 ? 2 : 1);
+	
+	if (_tdc > 3 * abs(deviation))
+	{
+		_tdc += deviation;
+	}
 
-	snprintf_P(buffer_info, sizeof(buffer_info), PSTR("Sleeping for %lu seconds...\r\n"), eeprom_read_dword(&tdc) / (bisect_pause_count > 0 ? 2 : 1));
+	snprintf_P(buffer_info, sizeof(buffer_info), PSTR("Sleeping for %lu seconds...\r\n"), _tdc);
 	log_serial(buffer_info);
 	_delay_ms(500);
 	
-	power_save((eeprom_read_dword(&tdc) + (rand() % (RANDOMNESS * 2) - RANDOMNESS)) / (bisect_pause_count > 0 ? 2 : 1));
+	power_save(_tdc);
 
 	LED_IDLE_set_level(false);
 }
@@ -559,7 +667,6 @@ void pause()
 
 int main(void)
 {
-
 	atmel_start_init();
 
 	LED_IDLE_set_level(true);
@@ -567,24 +674,24 @@ int main(void)
 	LED_TX_set_level(true);
 
 	log_serial_P(PSTR("\r\n"));
-	log_serial_P(PSTR("LoFence-V2 v1.1 by Alex9779\r\n"));
-	log_serial_P(PSTR("https://github.com/alex9779/lofence-v2\r\n"));
+	log_serial_P(PSTR("LoFence-V2 v1.2 by Alex9779\r\n"));
+	log_serial_P(PSTR("https://github.com/Alex9779/LoFence\r\n"));
 	log_serial_P(PSTR("\r\n"));
 
 	_delay_ms(1000);
 
 	ACTIVATE_set_level(true);
-
 	LED_IDLE_set_level(false);
 
-	log_serial_P(PSTR("Initializing ADC...\r\n"));
-	adc_init();
-	LED_MSR_set_level(false);
-
-	reset_join();
-
+	seed_rand();
+	adc_init();	
+	reset_join();	
+	calc_dccm();
+	
 	while (1)
 	{
+		daily_cycle_count++;
+		
 		// check for pending deactivation
 		if (do_deactivate)
 		{
@@ -612,7 +719,7 @@ int main(void)
 			
 			measure();
 			
-			transmit_data(false);
+			transmit_data(get_uplink_confirmation());
 		}
 		// settings requested
 		else
@@ -620,7 +727,15 @@ int main(void)
 			transmit_settings(false);
 		}
 
+		#ifndef WORKBENCH
 		check_battery();
+		#endif
+		
+		if (daily_cycle_count == daily_cycle_count_max)
+		{
+			daily_cycle_count = 0;
+			daily_confirmed_uplink_count = 0;
+		}
 		
 		pause();
 	}

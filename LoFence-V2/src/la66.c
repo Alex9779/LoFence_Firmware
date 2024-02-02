@@ -323,25 +323,41 @@ uint16_t LA66_getRx2Dl()
 	return 0;
 }
 
+// Get timestamp.
+uint32_t LA66_getTimestamp()
+{
+	LA66_buffer response;
+	
+	if (LA66_query_command_P(PSTR("AT+TIMESTAMP=?\r\n"), response) == LA66_SUCCESS)
+	{
+		char timestamp[10];
+		
+		strcpy(timestamp, strchr(response, '(') + 1);
+		
+		return atol(timestamp);
+	}
+	
+	return 0;
+}
+
 // Sends a confirmed/unconfirmed frame with an application payload.
 // Sets a recieved payload and its fPort and size.
 LA66_ReturnCode LA66_transmitB(uint8_t *fPort, const bool confirm, char *payload, uint8_t *rxSize)
 {
 	LA66_ReturnCode ret = LA66_ERR_PANIC;
-	
-	// send command
-	// Command format: AT+SENDB=<confirm>,<fPort>,<data_len>,<data>, example AT+SENDB=0,2,8,05820802581ea0a5
 	char buffer[32 + LA66_MAX_BUFF];
 	
+	// Command format: AT+SENDB=<confirm>,<fPort>,<data_len>,<data>, example AT+SENDB=0,2,8,05820802581ea0a5
 	snprintf_P(buffer, sizeof(buffer), PSTR("AT+SENDB=0%d,%u,%u,%s\r\n"), confirm, *fPort, strlen(payload) / 2, payload);
 	
+	// send command
 	ret = send_command(buffer);
 	
 	// check if command was successful
 	if (ret == LA66_SUCCESS)
 	{
 		// receive
-		LA66_ReceiveStage stage = WAIT_FOR_OK;
+		LA66_Stage stage = WAIT_FOR_OK;
 		uint32_t timeout;
 
 		if (confirm)
@@ -441,6 +457,89 @@ LA66_ReturnCode LA66_transmitB(uint8_t *fPort, const bool confirm, char *payload
 			strcpy(payload, _payload);
 			
 			readHex(payload, _payload);
+		}
+	}
+
+	return ret;
+}
+
+LA66_ReturnCode LA66_synctime()
+{
+	log_serial_P(PSTR("In sync\r\n"));
+	
+	LA66_ReturnCode ret = LA66_ERR_PANIC;
+	char buffer[32 + LA66_MAX_BUFF];
+	
+	snprintf_P(buffer, sizeof(buffer), PSTR("AT+DEVICETIMEREQ=1\r\n"));
+	
+	// send command
+	ret = send_command(buffer);
+	
+	// check if command was successful
+	if (ret == LA66_SUCCESS)
+	{
+		// receive
+		LA66_Stage stage = WAIT_FOR_OK;
+		uint32_t timeout;
+		
+		timeout = LA66_RX_TIMEOUT;
+		
+		for (uint32_t i = 0; i < timeout * 100L; i++)
+		{
+			if (read_line(buffer) > 0)
+			{
+				if (stage == WAIT_FOR_OK)
+				{
+					if (strcmp_P(buffer, PSTR(AT_ERROR)) == 0)
+					{
+						ret = LA66_ERROR;
+						break;
+					}
+					else if (strcmp_P(buffer, PSTR(AT_PARAM_ERROR)) == 0)
+					{
+						ret = LA66_ERR_PARAM;
+						break;
+					}
+					else if (strcmp_P(buffer, PSTR(AT_BUSY_ERROR)) == 0)
+					{
+						ret = LA66_ERR_BUSY;
+						break;
+					}
+					else if (strcmp_P(buffer, PSTR(AT_NO_NET_JOINED)) == 0)
+					{
+						ret = LA66_ERR_JOIN;
+						break;
+					}
+					else
+					{
+						if (strcmp(buffer, AT_OK) == 0)
+						{
+							stage = WAIT_FOR_TX;
+						}
+					}
+				}
+				else if (stage == WAIT_FOR_TX)
+				{
+					if (strcmp_P(buffer, PSTR("txDone")) == 0)
+					{
+						stage = WAIT_FOR_SYNCTIMEOK;
+						
+						_delay_100ms(10);
+					}
+				}
+				else if (stage == WAIT_FOR_SYNCTIMEOK)
+				{
+					if (strcmp_P(buffer, PSTR("Sync time ok")) == 0)
+					{
+						ret = LA66_SUCCESS;
+						
+						_delay_ms(100);
+						break;
+					}
+				}
+			}
+			
+			_delay_ms(10);
 		}
 	}
 

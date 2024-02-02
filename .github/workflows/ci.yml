@@ -17,7 +17,7 @@ jobs:
     - name: Install packages
       run: |
         sudo apt-get update -y && sudo apt-get install -y avr-libc binutils-avr openjdk-17-jre-headless gcc-avr make unzip
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Get tools
       run: |
         wget https://www.fischl.de/ispnub/downloads/ISPnubCreator_v1.4.jar
@@ -60,7 +60,7 @@ jobs:
       run: |
         /usr/lib/jvm/java-17-openjdk-amd64/bin/java -jar ISPnubCreator_v1.4.jar ./LoFence-V2/ISPnub/LoFence-V2_Release_full.ispnub ./LoFence-V2/Release/ISPnub_LoFence-V2_full.hex
         /usr/lib/jvm/java-17-openjdk-amd64/bin/java -jar ISPnubCreator_v1.4.jar ./LoFence-V2/ISPnub/LoFence-V2_Release_update.ispnub ./LoFence-V2/Release/ISPnub_LoFence-V2_update.hex
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: LoFence-V2_Firmware
         path: |
