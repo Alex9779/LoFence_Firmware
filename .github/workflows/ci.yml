@@ -41,7 +41,7 @@ jobs:
         sed -i 's/C:\\.*\\Debug\\/.\/LoFence-V2\/Debug\//g' ./LoFence-V2/ISPnub/LoFence-V2_Debug_full.ispnub
         sed -i 's/C:\\.*\\Debug\\/.\/LoFence-V2\/Debug\//g' ./LoFence-V2/ISPnub/LoFence-V2_Debug_update.ispnub
         sed -i 's/C:\\.*\\Release\\/.\/LoFence-V2\/Release\//g' ./LoFence-V2/ISPnub/LoFence-V2_Release_full.ispnub
-        sed -i 's/C:\\.*\\Release\\/.\/LoFence-V2\/Debug\//g' ./LoFence-V2/ISPnub/LoFence-V2_Release_update.ispnub
+        sed -i 's/C:\\.*\\Release\\/.\/LoFence-V2\/Release\//g' ./LoFence-V2/ISPnub/LoFence-V2_Release_update.ispnub
     - name: Run make for debug
       run: |
         mkdir src
