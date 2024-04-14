@@ -48,7 +48,7 @@ else
     else
         false
         while [ ! $? = "0" ]; do
-            avrdude -c $prog -p atmega328pb -U $boption hfuse:w:0xD1:m -U lfuse:w:0xE2:m -U flash:w:../$conf/LoFence-V2.hex:i -U eeprom:w:../$conf/LoFence-V2.eep:i -U lock:w:0xFC:m
+            avrdude -c $prog -p atmega328pb $boption -U hfuse:w:0xD1:m -U lfuse:w:0xE2:m -U flash:w:../$conf/LoFence-V2.hex:i -U eeprom:w:../$conf/LoFence-V2.eep:i -U lock:w:0xFC:m
             retry
         done
     fi
