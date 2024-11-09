@@ -589,7 +589,7 @@ void check_battery()
 {
 	// if maximum cycles the battery has been low is not reached
 	// and if the battery is above the absolute minimum of 3100mV
-	if (bat_low_count < eeprom_read_byte(&bat_low_count_max) && volt_bat > bat_low_min && volt_bat < eeprom_read_word(&bat_low))
+	if (bat_low_count < eeprom_read_byte(&bat_low_count_max) && volt_bat > eeprom_read_word(&bat_low_min) && volt_bat < eeprom_read_word(&bat_low))
 	{
 		bat_low_count++;
 		
@@ -597,7 +597,7 @@ void check_battery()
 		log_serial(buffer_info);
 	}
 	// if battery is lower than absolute minimum
-	else if (volt_bat <= bat_low_min)
+	else if (volt_bat <= eeprom_read_word(&bat_low_min))
 	{
 		log_serial_P(PSTR("Battery lower than absolute minimum, deactivating next cycle!\r\n"));
 		
@@ -674,7 +674,7 @@ int main(void)
 	LED_TX_set_level(true);
 
 	log_serial_P(PSTR("\r\n"));
-	log_serial_P(PSTR("LoFence-V2 v1.2 by Alex9779\r\n"));
+	log_serial_P(PSTR("LoFence-V2 v1.3 by Alex9779\r\n"));
 	log_serial_P(PSTR("https://github.com/Alex9779/LoFence\r\n"));
 	log_serial_P(PSTR("\r\n"));
 

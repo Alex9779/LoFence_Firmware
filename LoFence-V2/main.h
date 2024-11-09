@@ -1,7 +1,7 @@
 #ifndef MAIN_H_
 #define MAIN_H_
 
-#define VERSION 12
+#define VERSION 13
 
 // time to sleep between measurements
 #define INTERVAL_SECONDS 5 * 60
