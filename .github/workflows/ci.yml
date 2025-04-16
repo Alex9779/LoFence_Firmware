@@ -60,9 +60,12 @@ jobs:
       run: |
         /usr/lib/jvm/java-17-openjdk-amd64/bin/java -jar ISPnubCreator_v1.4.jar ./LoFence-V2/ISPnub/LoFence-V2_Release_full.ispnub ./LoFence-V2/Release/ISPnub_LoFence-V2_full.hex
         /usr/lib/jvm/java-17-openjdk-amd64/bin/java -jar ISPnubCreator_v1.4.jar ./LoFence-V2/ISPnub/LoFence-V2_Release_update.ispnub ./LoFence-V2/Release/ISPnub_LoFence-V2_update.hex
+    - name: Get short SHA
+      id: shortsha
+      run: echo "short_sha=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
     - uses: actions/upload-artifact@v4
       with:
-        name: LoFence-V2_Firmware
+        name: LoFence-V2_Firmware-${{ github.ref_type == 'tag' && github.ref_name || github.ref_type == 'branch' && steps.shortsha.outputs.short_sha }}
         path: |
           */Debug/LoFence-V2.hex
           */Debug/LoFence-V2.eep
