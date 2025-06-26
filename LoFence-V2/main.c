@@ -225,7 +225,7 @@ void reset_join()
 	LA66_reset();
 
 	log_serial_P(PSTR("Waiting to join network...\r\n"));
-	if (LA66_waitForJoin() == LA66_ERR_PANIC)
+	if (LA66_waitForJoin() == LA66_ERR_JOIN)
 	{
 		LA66_deactivate();
 
