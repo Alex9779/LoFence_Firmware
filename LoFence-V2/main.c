@@ -224,6 +224,8 @@ void reset_join()
 	log_serial_P(PSTR("Resetting LA66 module...\r\n"));
 	LA66_reset();
 
+	LED_TX_set_level(true);
+
 	log_serial_P(PSTR("Waiting to join network...\r\n"));
 	if (LA66_waitForJoin(LED_TX_toggle_level) == LA66_ERR_JOIN)
 	{
