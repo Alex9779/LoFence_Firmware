@@ -39,7 +39,15 @@ static void readHex(char* buf, char* txt)
 // while there is data, return null char if not
 static char read(const bool wait)
 {
-	if (USART_0_is_rx_ready() || wait)
+	uint16_t timeout = 100;
+
+	// wait for data to be available
+	while (!USART_0_is_rx_ready() && wait && timeout--)
+	{
+		_delay_ms(1);
+	}
+
+	if (USART_0_is_rx_ready())
 	{
 		return USART_0_read();
 	}
