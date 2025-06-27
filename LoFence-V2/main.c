@@ -353,7 +353,7 @@ void handle_downlink(uint8_t *rxSize)
 				{
 					if (eeprom_read_dword(&tdc) >= 60)
 					{
-						// see calc_recurring_settings() comment for this equal assignement
+						// see handle_daily_settings() comment for this equal assignement
 						bisect_pause_count = 3;
 					}
 				}
@@ -536,20 +536,20 @@ void transmit_error(const bool confirm)
 	}
 }
 
-void calc_recurring_settings()
+void handle_daily_settings()
 {
 	// daily_cycle_count is 1/4 of daily max uplink count
-	if (daily_cycle_count == daily_cycle_count_max * 1 / 4)
+	if (daily_cycle_count == 1)
 	{
 		settings = 1;
 	}
 	// daily_cycle_count is 2/4 of daily max uplink count
-	else if (daily_cycle_count == daily_cycle_count_max * 2 / 4)
+	else if (daily_cycle_count == 2)
 	{
 		settings = 2;
 	}
 	// daily_cycle_count is 3/4 of daily max uplink count
-	else if (daily_cycle_count == daily_cycle_count_max * 3 / 4)
+	else if (daily_cycle_count == 3)
 	{
 		settings = 3;
 	}
@@ -726,7 +726,7 @@ int main(void)
 		// normal cycle
 		else if (settings == 0)
 		{
-			calc_recurring_settings();
+			handle_daily_settings();
 			
 			measure();
 			
@@ -736,6 +736,8 @@ int main(void)
 		else
 		{
 			transmit_settings(false);
+
+			daily_cycle_count--;
 		}
 
 		#ifndef WORKBENCH
