@@ -408,7 +408,14 @@ void transmit_data(const bool confirm)
 		log_serial_P(PSTR("Transmitting data...\r\n"));
 	}
 
-	snprintf_P(buffer_la, sizeof(buffer_la), PSTR("%04X%04X%04X"), volt_bat, volt_fence_plus, volt_fence_minus);
+	if (daily_cycle_count == 1)
+	{
+		snprintf_P(buffer_la, sizeof(buffer_la), PSTR("%04X%04X%04X%02X"), volt_bat, volt_fence_plus, volt_fence_minus, VERSION);
+	}
+	else
+	{
+		snprintf_P(buffer_la, sizeof(buffer_la), PSTR("%04X%04X%04X"), volt_bat, volt_fence_plus, volt_fence_minus);
+	}
 
 	LA66_ReturnCode ret = LA66_transmitB(&fPort, confirm, buffer_la, &rxSize);
 	
