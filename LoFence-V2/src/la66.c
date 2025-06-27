@@ -254,11 +254,12 @@ void LA66_deactivate()
 
 // The LA66 automatically tries to join a network when activated.
 // Wait for joined a network.
-LA66_ReturnCode LA66_waitForJoin()
+LA66_ReturnCode LA66_waitForJoin(void (*led_toggle_func)(void))
 {
 	LA66_ReturnCode ret = LA66_ERR_PANIC;
 	char response[LA66_MAX_BUFF];
 	bool joined = false;
+	uint16_t led_counter = 0;
 	
 	for (uint32_t i = 0; i < LA66_JOIN_TIMEOUT * 100L; i++)
 	{
@@ -279,6 +280,14 @@ LA66_ReturnCode LA66_waitForJoin()
 			
 			break;
 		}
+
+		// Blink LED every 500ms
+        if (++led_counter >= 50)
+        {
+            if (led_toggle_func)
+                led_toggle_func();
+            led_counter = 0;
+        }
 
 		_delay_ms(10);
 	}

@@ -102,7 +102,7 @@ config.h) to communicate over a LoRaWAN network.
 LA66
 @return LA66_ERR_PANIC If this happens something went really wrong when writing a command
 */
-LA66_ReturnCode LA66_waitForJoin();
+LA66_ReturnCode LA66_waitForJoin(void (*led_toggle_func)(void));
 
 uint8_t LA66_getDr();
 uint16_t LA66_getRx1Dl();

@@ -225,7 +225,7 @@ void reset_join()
 	LA66_reset();
 
 	log_serial_P(PSTR("Waiting to join network...\r\n"));
-	if (LA66_waitForJoin() == LA66_ERR_JOIN)
+	if (LA66_waitForJoin(LED_TX_toggle_level) == LA66_ERR_JOIN)
 	{
 		LA66_deactivate();
 
