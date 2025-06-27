@@ -112,6 +112,8 @@ void log_serial_P(const char *msg)
 
 void adc_init()
 {
+	LED_MSR_set_level(true);
+
 	log_serial_P(PSTR("Initializing ADC...\r\n"));
 	
 	PRR0 &= ~(1 << PRADC); // Enable
@@ -218,9 +220,7 @@ void measure()
 }
 
 void reset_join()
-{
-	LED_TX_set_level(true);
-	
+{	
 	log_serial_P(PSTR("Resetting LA66 module...\r\n"));
 	LA66_reset();
 
@@ -682,6 +682,8 @@ int main(void)
 
 	ACTIVATE_set_level(true);
 	LED_IDLE_set_level(false);
+	LED_MSR_set_level(false);
+	LED_TX_set_level(false);
 
 	seed_rand();
 	adc_init();	
