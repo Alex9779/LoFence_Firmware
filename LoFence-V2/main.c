@@ -17,8 +17,8 @@ uint8_t EEMEM bat_low_count_max = BATTERY_LOW_MAX_CYCLES;
 uint16_t EEMEM bat_low_min = BATTERY_ABSOLUTE_MINIMUM;
 uint8_t EEMEM daily_confirmed_uplinks = DAILY_CONFIRMED_UPLINKS;
 
-volatile uint32_t seconds = 0;
 volatile uint32_t day_seconds = 0;
+volatile uint32_t sleep_seconds = 0;
 
 volatile uint8_t adc_clear = 0;
 volatile uint8_t adc_max = 0;
@@ -49,8 +49,8 @@ ISR(TIMER2_OVF_vect)
 {
 	// see https://www.mikrocontroller.net/articles/AVR-GCC-Tutorial/Die_Timer_und_Z%C3%A4hler_des_AVR#Timer2_im_Asynchron_Mode
 	TCCR2B = TCCR2B;
-	seconds++;
 	day_seconds++;
+	sleep_seconds++;
 	LED_CLK_toggle_level();
 	while (ASSR & ((1 << TCN2UB) | (1 << OCR2AUB) | (1 << OCR2BUB) | (1 << TCR2AUB) | (1 << TCR2BUB)));
 }
@@ -72,9 +72,9 @@ ISR(ADC_vect)
 
 void power_save(uint32_t sec)
 {
-	seconds = 0;
+	sleep_seconds = 0;
 	sleep_enable();
-	while (seconds <= sec)
+	while (sleep_seconds <= sec)
 	{
 		sleep_mode();
 	}
