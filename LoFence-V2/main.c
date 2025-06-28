@@ -37,10 +37,14 @@ uint8_t settings = 0;
 
 uint32_t daily_cycle_count = 0;
 
+uint32_t cycle_start_day_seconds = 0;
+
 uint8_t daily_confirmed_uplink_count = 0;
 
 uint8_t bat_low_count = 0;
 uint8_t bisect_pause_count = 0;
+uint32_t bisect_cycle_seconds = 0;
+
 bool do_deactivate = false;
 
 // ----------------------------------------------------------------------------------------------
@@ -657,9 +661,24 @@ void pause()
 		_tdc += deviation;
 	}
 
+	uint32_t elapsed = day_seconds - cycle_start_day_seconds;
+	
+	// if next cycle is the first bisected it is a settings cycle so save the cycle seconds
+	if (bisect_pause_count == 2)
+	{
+		bisect_cycle_seconds = elapsed;
+	}
+	// if next cycle is the last bisected or not bisected it is a normal so apply the correction
+	else if (bisect_pause_count <= 1)
+	{
+		_tdc -= elapsed + bisect_cycle_seconds;
+
+		bisect_cycle_seconds = 0;
+	}
+
 	snprintf_P(buffer_info, sizeof(buffer_info), PSTR("Sleeping for %lu seconds...\r\n"), _tdc);
 	log_serial(buffer_info);
-	_delay_ms(500);
+	_delay_ms(100);
 	
 	power_save(_tdc);
 
@@ -700,6 +719,8 @@ int main(void)
 			daily_cycle_count = 0;
 			daily_confirmed_uplink_count = 0;
 		}
+
+		cycle_start_day_seconds = day_seconds;
 		
 		daily_cycle_count++;
 		
