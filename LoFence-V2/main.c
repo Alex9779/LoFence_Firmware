@@ -18,6 +18,7 @@ uint16_t EEMEM bat_low_min = BATTERY_ABSOLUTE_MINIMUM;
 uint8_t EEMEM daily_confirmed_uplinks = DAILY_CONFIRMED_UPLINKS;
 
 volatile uint32_t seconds = 0;
+volatile uint32_t day_seconds = 0;
 
 volatile uint8_t adc_clear = 0;
 volatile uint8_t adc_max = 0;
@@ -35,7 +36,6 @@ uint16_t volt_fence_minus = 0;
 uint8_t settings = 0;
 
 uint32_t daily_cycle_count = 0;
-uint32_t daily_cycle_count_max = 0;
 
 uint8_t daily_confirmed_uplink_count = 0;
 
@@ -50,6 +50,7 @@ ISR(TIMER2_OVF_vect)
 	// see https://www.mikrocontroller.net/articles/AVR-GCC-Tutorial/Die_Timer_und_Z%C3%A4hler_des_AVR#Timer2_im_Asynchron_Mode
 	TCCR2B = TCCR2B;
 	seconds++;
+	day_seconds++;
 	LED_CLK_toggle_level();
 	while (ASSR & ((1 << TCN2UB) | (1 << OCR2AUB) | (1 << OCR2BUB) | (1 << TCR2AUB) | (1 << TCR2BUB)));
 }
@@ -241,18 +242,6 @@ void reset_join()
 	LED_TX_set_level(false);
 }
 
-void calc_dccm()
-{
-	// calculate daily cycle count maximum (tdc + measurements + other delays)
-	daily_cycle_count_max = (uint32_t)24 * 60 * 60 / (eeprom_read_dword(&tdc) + 2 * eeprom_read_word(&msr_ms) / 1000 + 3);
-	
-	snprintf_P(buffer_info, sizeof(buffer_info), PSTR("Maximum daily cycles: %lu\r\n"), daily_cycle_count_max);
-	log_serial(buffer_info);
-	
-	// reset interval for recurring settings uplinks
-	daily_cycle_count = 0;
-}
-
 void handle_downlink(uint8_t *rxSize)
 {
 	log_serial_P(PSTR("Downlink received...\r\n"));
@@ -271,8 +260,6 @@ void handle_downlink(uint8_t *rxSize)
 				}
 				
 				eeprom_write_dword(&tdc, value);
-				
-				calc_dccm();
 			}
 			break;
 		}
@@ -292,7 +279,7 @@ void handle_downlink(uint8_t *rxSize)
 				
 				eeprom_write_byte(&daily_confirmed_uplinks, value);
 				
-				daily_confirmed_uplink_count = daily_cycle_count / (daily_cycle_count_max / value);
+				daily_confirmed_uplink_count = 0;
 			}
 			break;
 		}
@@ -567,16 +554,23 @@ void handle_daily_settings()
 bool get_uplink_confirmation()
 {
 	uint8_t _daily_confirmed_uplinks = eeprom_read_byte(&daily_confirmed_uplinks);
-	
-	if ((_daily_confirmed_uplinks > 0 && daily_cycle_count == daily_cycle_count_max / _daily_confirmed_uplinks * (daily_confirmed_uplink_count + 1))
-	|| daily_cycle_count_max <= _daily_confirmed_uplinks)
-	{
-		daily_confirmed_uplink_count++;
-		
-		return true;
-	}
-	
-	return false;
+
+    if (_daily_confirmed_uplinks == 0)
+        return false;
+
+    // Calculate the interval in seconds between confirmed uplinks
+    uint32_t interval = 86400UL / _daily_confirmed_uplinks;
+
+    // Calculate how many confirmed uplinks should have occurred by now
+    uint8_t expected = day_seconds / interval;
+
+    if (expected > daily_confirmed_uplink_count)
+    {
+        daily_confirmed_uplink_count = expected;
+        return true;
+    }
+
+    return false;
 }
 
 void seed_rand()
@@ -696,11 +690,17 @@ int main(void)
 
 	seed_rand();
 	adc_init();	
-	reset_join();	
-	calc_dccm();
+	reset_join();
 	
 	while (1)
 	{
+		if (day_seconds >= 86400)
+		{
+			day_seconds = 0;
+			daily_cycle_count = 0;
+			daily_confirmed_uplink_count = 0;
+		}
+		
 		daily_cycle_count++;
 		
 		// check for pending deactivation
@@ -743,12 +743,6 @@ int main(void)
 		#ifndef WORKBENCH
 		check_battery();
 		#endif
-		
-		if (daily_cycle_count == daily_cycle_count_max)
-		{
-			daily_cycle_count = 0;
-			daily_confirmed_uplink_count = 0;
-		}
 		
 		pause();
 	}
