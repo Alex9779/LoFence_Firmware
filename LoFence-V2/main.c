@@ -36,11 +36,8 @@ uint16_t volt_fence_minus = 0;
 uint8_t settings = 0;
 
 uint32_t daily_cycle_count = 0;
-
 uint32_t cycle_start_day_seconds = 0;
-
 uint8_t daily_confirmed_uplink_count = 0;
-
 uint8_t bat_low_count = 0;
 uint8_t bisect_pause_count = 0;
 uint32_t bisect_cycle_seconds = 0;
