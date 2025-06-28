@@ -63,6 +63,9 @@ jobs:
     - name: Get short SHA
       id: shortsha
       run: echo "short_sha=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+    - name: Rename project dir
+      run: |
+        mv ./LoFence-V2 ./LoFence-V2_Firmware-${{ github.ref_type == 'tag' && github.ref_name || github.ref_type == 'branch' && steps.shortsha.outputs.short_sha }}
     - uses: actions/upload-artifact@v4
       with:
         name: LoFence-V2_Firmware-${{ github.ref_type == 'tag' && github.ref_name || github.ref_type == 'branch' && steps.shortsha.outputs.short_sha }}
