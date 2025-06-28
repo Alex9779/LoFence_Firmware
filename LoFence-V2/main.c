@@ -563,7 +563,7 @@ bool get_uplink_confirmation()
         return false;
 
     // Calculate the interval in seconds between confirmed uplinks
-    uint32_t interval = 86400UL / _daily_confirmed_uplinks;
+    uint32_t interval = 86400UL / (_daily_confirmed_uplinks + 1);
 
     // Calculate how many confirmed uplinks should have occurred by now
     uint8_t expected = day_seconds / interval;
