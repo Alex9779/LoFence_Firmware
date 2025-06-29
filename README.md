@@ -10,7 +10,9 @@ The LA66 communication has been moved to an own header and source file. A future
 
 ### Normal data uplinks
 
-All uplinks by the device are sent unconfirmed except the "low battery" uplink on application port (fPort) **1**.
+All uplinks by the device are sent unconfirmed except the "low battery" uplink on application port (fPort) **1** and one uplink a day (can be adjusted).
+
+The very first normal uplink each day also includes the firmware version tag.
 
 ### Low battery uplink
 
