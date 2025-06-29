@@ -17,7 +17,8 @@ uint8_t EEMEM bat_low_count_max = BATTERY_LOW_MAX_CYCLES;
 uint16_t EEMEM bat_low_min = BATTERY_ABSOLUTE_MINIMUM;
 uint8_t EEMEM daily_confirmed_uplinks = DAILY_CONFIRMED_UPLINKS;
 
-volatile uint32_t seconds = 0;
+volatile uint32_t day_seconds = 0;
+volatile uint32_t sleep_seconds = 0;
 
 volatile uint8_t adc_clear = 0;
 volatile uint8_t adc_max = 0;
@@ -35,12 +36,12 @@ uint16_t volt_fence_minus = 0;
 uint8_t settings = 0;
 
 uint32_t daily_cycle_count = 0;
-uint32_t daily_cycle_count_max = 0;
-
+uint32_t cycle_start_day_seconds = 0;
 uint8_t daily_confirmed_uplink_count = 0;
-
 uint8_t bat_low_count = 0;
 uint8_t bisect_pause_count = 0;
+uint32_t bisect_cycle_seconds = 0;
+
 bool do_deactivate = false;
 
 // ----------------------------------------------------------------------------------------------
@@ -49,7 +50,8 @@ ISR(TIMER2_OVF_vect)
 {
 	// see https://www.mikrocontroller.net/articles/AVR-GCC-Tutorial/Die_Timer_und_Z%C3%A4hler_des_AVR#Timer2_im_Asynchron_Mode
 	TCCR2B = TCCR2B;
-	seconds++;
+	day_seconds++;
+	sleep_seconds++;
 	LED_CLK_toggle_level();
 	while (ASSR & ((1 << TCN2UB) | (1 << OCR2AUB) | (1 << OCR2BUB) | (1 << TCR2AUB) | (1 << TCR2BUB)));
 }
@@ -71,9 +73,9 @@ ISR(ADC_vect)
 
 void power_save(uint32_t sec)
 {
-	seconds = 0;
+	sleep_seconds = 0;
 	sleep_enable();
-	while (seconds <= sec)
+	while (sleep_seconds <= sec)
 	{
 		sleep_mode();
 	}
@@ -112,6 +114,8 @@ void log_serial_P(const char *msg)
 
 void adc_init()
 {
+	LED_MSR_set_level(true);
+
 	log_serial_P(PSTR("Initializing ADC...\r\n"));
 	
 	PRR0 &= ~(1 << PRADC); // Enable
@@ -218,14 +222,14 @@ void measure()
 }
 
 void reset_join()
-{
-	LED_TX_set_level(true);
-	
+{	
 	log_serial_P(PSTR("Resetting LA66 module...\r\n"));
 	LA66_reset();
 
+	LED_TX_set_level(true);
+
 	log_serial_P(PSTR("Waiting to join network...\r\n"));
-	if (LA66_waitForJoin() == LA66_ERR_PANIC)
+	if (LA66_waitForJoin(LED_TX_toggle_level) == LA66_ERR_JOIN)
 	{
 		LA66_deactivate();
 
@@ -237,18 +241,6 @@ void reset_join()
 	}
 	
 	LED_TX_set_level(false);
-}
-
-void calc_dccm()
-{
-	// calculate daily cycle count maximum (tdc + measurements + other delays)
-	daily_cycle_count_max = (uint32_t)24 * 60 * 60 / (eeprom_read_dword(&tdc) + 2 * eeprom_read_word(&msr_ms) / 1000 + 3);
-	
-	snprintf_P(buffer_info, sizeof(buffer_info), PSTR("Maximum daily cycles: %lu\r\n"), daily_cycle_count_max);
-	log_serial(buffer_info);
-	
-	// reset interval for recurring settings uplinks
-	daily_cycle_count = 0;
 }
 
 void handle_downlink(uint8_t *rxSize)
@@ -269,8 +261,6 @@ void handle_downlink(uint8_t *rxSize)
 				}
 				
 				eeprom_write_dword(&tdc, value);
-				
-				calc_dccm();
 			}
 			break;
 		}
@@ -290,7 +280,7 @@ void handle_downlink(uint8_t *rxSize)
 				
 				eeprom_write_byte(&daily_confirmed_uplinks, value);
 				
-				daily_confirmed_uplink_count = daily_cycle_count / (daily_cycle_count_max / value);
+				daily_confirmed_uplink_count = 0;
 			}
 			break;
 		}
@@ -351,7 +341,7 @@ void handle_downlink(uint8_t *rxSize)
 				{
 					if (eeprom_read_dword(&tdc) >= 60)
 					{
-						// see calc_recurring_settings() comment for this equal assignement
+						// see handle_daily_settings() comment for this equal assignement
 						bisect_pause_count = 3;
 					}
 				}
@@ -406,7 +396,14 @@ void transmit_data(const bool confirm)
 		log_serial_P(PSTR("Transmitting data...\r\n"));
 	}
 
-	snprintf_P(buffer_la, sizeof(buffer_la), PSTR("%04X%04X%04X"), volt_bat, volt_fence_plus, volt_fence_minus);
+	if (daily_cycle_count == 1)
+	{
+		snprintf_P(buffer_la, sizeof(buffer_la), PSTR("%04X%04X%04X%02X"), volt_bat, volt_fence_plus, volt_fence_minus, VERSION);
+	}
+	else
+	{
+		snprintf_P(buffer_la, sizeof(buffer_la), PSTR("%04X%04X%04X"), volt_bat, volt_fence_plus, volt_fence_minus);
+	}
 
 	LA66_ReturnCode ret = LA66_transmitB(&fPort, confirm, buffer_la, &rxSize);
 	
@@ -527,20 +524,20 @@ void transmit_error(const bool confirm)
 	}
 }
 
-void calc_recurring_settings()
+void handle_daily_settings()
 {
 	// daily_cycle_count is 1/4 of daily max uplink count
-	if (daily_cycle_count == daily_cycle_count_max * 1 / 4)
+	if (daily_cycle_count == 1)
 	{
 		settings = 1;
 	}
 	// daily_cycle_count is 2/4 of daily max uplink count
-	else if (daily_cycle_count == daily_cycle_count_max * 2 / 4)
+	else if (daily_cycle_count == 2)
 	{
 		settings = 2;
 	}
 	// daily_cycle_count is 3/4 of daily max uplink count
-	else if (daily_cycle_count == daily_cycle_count_max * 3 / 4)
+	else if (daily_cycle_count == 3)
 	{
 		settings = 3;
 	}
@@ -558,16 +555,23 @@ void calc_recurring_settings()
 bool get_uplink_confirmation()
 {
 	uint8_t _daily_confirmed_uplinks = eeprom_read_byte(&daily_confirmed_uplinks);
-	
-	if ((_daily_confirmed_uplinks > 0 && daily_cycle_count == daily_cycle_count_max / _daily_confirmed_uplinks * (daily_confirmed_uplink_count + 1))
-	|| daily_cycle_count_max <= _daily_confirmed_uplinks)
-	{
-		daily_confirmed_uplink_count++;
-		
-		return true;
-	}
-	
-	return false;
+
+    if (_daily_confirmed_uplinks == 0)
+        return false;
+
+    // Calculate the interval in seconds between confirmed uplinks
+    uint32_t interval = 86400UL / (_daily_confirmed_uplinks + 1);
+
+    // Calculate how many confirmed uplinks should have occurred by now
+    uint8_t expected = day_seconds / interval;
+
+    if (expected > daily_confirmed_uplink_count)
+    {
+        daily_confirmed_uplink_count = expected;
+        return true;
+    }
+
+    return false;
 }
 
 void seed_rand()
@@ -654,9 +658,24 @@ void pause()
 		_tdc += deviation;
 	}
 
+	uint32_t elapsed = day_seconds - cycle_start_day_seconds;
+	
+	// if next cycle is the first bisected it is a settings cycle so save the cycle seconds
+	if (bisect_pause_count == 2)
+	{
+		bisect_cycle_seconds = elapsed;
+	}
+	// if next cycle is the last bisected or not bisected it is a normal so apply the correction
+	else if (bisect_pause_count <= 1)
+	{
+		_tdc -= elapsed + bisect_cycle_seconds;
+
+		bisect_cycle_seconds = 0;
+	}
+
 	snprintf_P(buffer_info, sizeof(buffer_info), PSTR("Sleeping for %lu seconds...\r\n"), _tdc);
 	log_serial(buffer_info);
-	_delay_ms(500);
+	_delay_ms(100);
 	
 	power_save(_tdc);
 
@@ -674,7 +693,7 @@ int main(void)
 	LED_TX_set_level(true);
 
 	log_serial_P(PSTR("\r\n"));
-	log_serial_P(PSTR("LoFence-V2 v1.3 by Alex9779\r\n"));
+	log_serial_P(PSTR("LoFence-V2 v1.4 by Alex9779\r\n"));
 	log_serial_P(PSTR("https://github.com/Alex9779/LoFence\r\n"));
 	log_serial_P(PSTR("\r\n"));
 
@@ -682,14 +701,24 @@ int main(void)
 
 	ACTIVATE_set_level(true);
 	LED_IDLE_set_level(false);
+	LED_MSR_set_level(false);
+	LED_TX_set_level(false);
 
 	seed_rand();
 	adc_init();	
-	reset_join();	
-	calc_dccm();
+	reset_join();
 	
 	while (1)
 	{
+		if (day_seconds >= 86400)
+		{
+			day_seconds = 0;
+			daily_cycle_count = 0;
+			daily_confirmed_uplink_count = 0;
+		}
+
+		cycle_start_day_seconds = day_seconds;
+		
 		daily_cycle_count++;
 		
 		// check for pending deactivation
@@ -715,7 +744,7 @@ int main(void)
 		// normal cycle
 		else if (settings == 0)
 		{
-			calc_recurring_settings();
+			handle_daily_settings();
 			
 			measure();
 			
@@ -725,17 +754,13 @@ int main(void)
 		else
 		{
 			transmit_settings(false);
+
+			daily_cycle_count--;
 		}
 
 		#ifndef WORKBENCH
 		check_battery();
 		#endif
-		
-		if (daily_cycle_count == daily_cycle_count_max)
-		{
-			daily_cycle_count = 0;
-			daily_confirmed_uplink_count = 0;
-		}
 		
 		pause();
 	}

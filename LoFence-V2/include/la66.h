@@ -63,15 +63,9 @@ typedef enum LA66_Stage {
 //===========
 // FUNCTIONS
 //===========
-//system
 //! Resets the LA66 by toggling the RESET pin
 /*!
 Toogles the reset pin (from HIGH -> LOW -> HIGH).
-
-The LA66 module transmits it's firmware version upon being reset, so if the version is successful.
-
-@return LA66_SUCCESS if version was succesfully retrieved after toggling the RESET pin
-@return LA66_ERR_PANIC if version was not retrieved after toggling the RESET pin
 */
 void LA66_reset();
 
@@ -91,18 +85,12 @@ to response
 */
 LA66_ReturnCode LA66_query_command_P(const char *command, char *response);
 
-//LoRa
-//! Initialises all the LA66 MAC settings required to run LoRa commands (join, tx, etc).
+//! Waits for the LA66 to join a LoRaWAN network
 /*!
-Resets the software LoRaWAN stack and initialises all of the required parameters (set in
-config.h) to communicate over a LoRaWAN network.
-
-@return LA66_SUCCESS The function reset & initialised all the required values without failure
-@return LA66_ERR_PARAM Likely means memory issue was caused while reading a response from the
-LA66
-@return LA66_ERR_PANIC If this happens something went really wrong when writing a command
+@return LA66_SUCCESS The device joined a LoRaWAN network and is ready to transmit data
+@return LA66_ERR_JOIN The device was not able to join a LoRaWAN network
 */
-LA66_ReturnCode LA66_waitForJoin();
+LA66_ReturnCode LA66_waitForJoin(void (*led_toggle_func)(void));
 
 uint8_t LA66_getDr();
 uint16_t LA66_getRx1Dl();

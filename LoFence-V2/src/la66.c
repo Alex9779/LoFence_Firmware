@@ -39,7 +39,15 @@ static void readHex(char* buf, char* txt)
 // while there is data, return null char if not
 static char read(const bool wait)
 {
-	if (USART_0_is_rx_ready() || wait)
+	uint16_t timeout = 100;
+
+	// wait for data to be available
+	while (!USART_0_is_rx_ready() && wait && timeout--)
+	{
+		_delay_ms(1);
+	}
+
+	if (USART_0_is_rx_ready())
 	{
 		return USART_0_read();
 	}
@@ -246,16 +254,20 @@ void LA66_deactivate()
 
 // The LA66 automatically tries to join a network when activated.
 // Wait for joined a network.
-LA66_ReturnCode LA66_waitForJoin()
+LA66_ReturnCode LA66_waitForJoin(void (*led_toggle_func)(void))
 {
 	LA66_ReturnCode ret = LA66_ERR_PANIC;
 	char response[LA66_MAX_BUFF];
 	bool joined = false;
+	uint16_t blink_counter = 0;
+	bool blink = false;
 	
 	for (uint32_t i = 0; i < LA66_JOIN_TIMEOUT * 100L; i++)
 	{
-		while (read_line(response) > 0)
+		if (read_line(response) > 0)
 		{
+			blink = true;
+
 			if (strcmp_P(response, PSTR("JOINED")) == 0)
 			{
 				log_serial_P(PSTR("Joined network!\r\n"));
@@ -270,6 +282,17 @@ LA66_ReturnCode LA66_waitForJoin()
 			ret = LA66_SUCCESS;
 			
 			break;
+		}
+
+		if (blink)
+		{
+			// Blink LED every 500ms
+			if (++blink_counter >= 50)
+			{
+				if (led_toggle_func)
+					led_toggle_func();
+				blink_counter = 0;
+			}
 		}
 
 		_delay_ms(10);

@@ -10,7 +10,9 @@ The LA66 communication has been moved to an own header and source file. A future
 
 ### Normal data uplinks
 
-All uplinks by the device are sent unconfirmed except one uplink per day by default (amount is adjustable) and the "low battery" uplink on application port (fPort) **1**.
+All uplinks by the device are sent unconfirmed except the "low battery" uplink on application port (fPort) **1** and one uplink a day (can be adjusted).
+
+The very first normal uplink each day also includes the firmware version tag.
 
 ### Low battery uplink
 
@@ -22,9 +24,7 @@ The LA66 tries to get a confirmation for about 30 seconds and sends the uplink a
 
 ### Settings uplinks
 
-The device sends its three settings uplinks each once about every 24 hours automatically.
-
-So this does not have to be triggered manually with new activated devices, the first settings uplink is sent about 6 hours, the second about 12 hours and the third 18 hours after activation.
+The device sends its three settings uplinks halve *tdc* (transmit duty cycle) between the first four normal data uplinks and then once about every 24 hours automatically.
 
 With special downlink commands (see [Downlink commands](#downlink-commands)) the device can also be triggered to sent its settings the next uplink.
 
