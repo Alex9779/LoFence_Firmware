@@ -693,7 +693,7 @@ int main(void)
 	LED_TX_set_level(true);
 
 	log_serial_P(PSTR("\r\n"));
-	log_serial_P(PSTR("LoFence-V2 v1.3 by Alex9779\r\n"));
+	log_serial_P(PSTR("LoFence-V2 v1.4 by Alex9779\r\n"));
 	log_serial_P(PSTR("https://github.com/Alex9779/LoFence\r\n"));
 	log_serial_P(PSTR("\r\n"));
 
